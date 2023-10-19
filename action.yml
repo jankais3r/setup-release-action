@@ -1,0 +1,43 @@
+---
+name: "Setup Release"
+description: "Parse the changelog and setup the release parameters."
+author: "LizardByte"
+
+inputs:
+  changelog_path:
+    description: "Path to the changelog file, relative to the GitHub workspace."
+    default: "CHANGELOG.md"
+    required: false
+  fail_on_events_api_error:
+    description: "Whether to fail if the GitHub Events API returns an error."
+    default: 'false'
+    required: false
+  github_token:
+    description: "GitHub token to use for API requests."
+    required: true
+
+outputs:
+  changelog_changes:
+    description: "List of changes in the latest version."
+  changelog_date:
+    description: "Date of the latest version in the format: `yyyy.m.d`"
+  changelog_exists:
+    description: "Whether the changelog exists."
+  changelog_release_exists:
+    description: "Whether the release exists in GitHub."
+  changelog_url:
+    description: "URL to the latest version in the changelog."
+  changelog_version:
+    description: "Latest version in the changelog."
+  publish_stable_release:
+    description: "Whether to publish a stable release."
+  release_build:
+    description: "Build number of the release to make."
+  release_tag:
+    description: "Tag of the release to make. e.g. `vYYYY.M.D-Build` or `vYYYY.M.D`"
+  release_version:
+    description: "Version of the release to make."
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
