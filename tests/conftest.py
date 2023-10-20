@@ -9,7 +9,7 @@ import requests
 
 # set environment variables
 load_dotenv()
-os.environ['GITHUB_REPOSITORY'] = 'LizardByte/action-setup-release'
+os.environ['GITHUB_REPOSITORY'] = 'LizardByte/setup-release-action'
 os.environ['GITHUB_OUTPUT'] = 'github_output.md'
 os.environ['GITHUB_STEP_SUMMARY'] = 'github_step_summary.md'
 os.environ['GITHUB_WORKSPACE'] = os.path.join(os.getcwd(), 'github', 'workspace')

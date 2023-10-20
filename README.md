@@ -1,4 +1,4 @@
-# action-setup-release
+# setup-release-action
 A reusable action to setup release inputs for GitHub Actions. This action is tailored to the
 @LizardByte organization, but can be used by anyone if they follow the same conventions.
 
@@ -18,7 +18,7 @@ The action does the following:
 ```yaml
 - name: Setup Release
   id: setup_release
-  uses: LizardByte/action-setup-release@master
+  uses: LizardByte/setup-release-action@master
   with:
     github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -27,7 +27,7 @@ The action does the following:
 ```yaml
 - name: Setup Release
   id: setup_release
-  uses: LizardByte/action-setup-release@master
+  uses: LizardByte/setup-release-action@master
   with:
     changelog_path: ./docs/CHANGELOG.md
     fail_on_events_api_error: true
