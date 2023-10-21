@@ -1,4 +1,7 @@
 # setup-release-action
+[![GitHub Workflow Status (CI)](https://img.shields.io/github/actions/workflow/status/lizardbyte/setup-release-action/ci.yml.svg?branch=master&label=CI%20build&logo=github&style=for-the-badge)](https://github.com/LizardByte/setup-release-action/actions/workflows/ci.yml?query=branch%3Amaster)
+[![Codecov](https://img.shields.io/codecov/c/gh/LizardByte/setup-release-action.svg?token=joIISKAJtv&style=for-the-badge&logo=codecov&label=codecov)](https://app.codecov.io/gh/LizardByte/setup-release-action)
+
 A reusable action to setup release inputs for GitHub Actions. This action is tailored to the
 @LizardByte organization, but can be used by anyone if they follow the same conventions.
 
