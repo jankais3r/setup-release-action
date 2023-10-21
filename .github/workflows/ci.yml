@@ -132,3 +132,31 @@ jobs:
               echo "changelog_version does not match expected"
               exit 1
           fi
+
+  release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Action
+        id: setup-release
+        uses: ./
+        with:
+          fail_on_events_api_error: true
+          github_token: ${{ secrets.GH_BOT_TOKEN }}
+
+      - name: Create Release
+        id: action
+        uses: LizardByte/create-release-action@master
+        with:
+          allowUpdates: false
+          artifacts: ''
+          body: ''
+          discussionCategory: announcements
+          generateReleaseNotes: true
+          name: ${{ steps.setup-release.outputs.release_tag }}
+          prerelease: ${{ steps.setup-release.outputs.publish_stable_release != 'True' }}
+          tag: ${{ steps.setup-release.outputs.release_tag }}
+          token: ${{ secrets.GH_BOT_TOKEN }}

@@ -35,11 +35,13 @@ The action does the following:
 ```
 
 ## Inputs
-| Name                     | Description                                                  | Default        | Required |
-|--------------------------|--------------------------------------------------------------|----------------|----------|
-| changelog_path           | The path to the changelog file                               | `CHANGELOG.md` | `false`  |
-| fail_on_events_api_error | Fail if the action cannot find this commit in the events API | `false`        | `false`  |
-| github_token             | The GitHub token to use for API calls                        |                | `true`   |
+| Name                         | Description                                                                                                                                            | Default        | Required |
+|------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|----------|
+| changelog_path               | The path to the changelog file                                                                                                                         | `CHANGELOG.md` | `false`  |
+| fail_on_events_api_error     | Fail if the action cannot find this commit in the events API                                                                                           | `false`        | `false`  |
+| github_token                 | The GitHub token to use for API calls                                                                                                                  |                | `true`   |
+| include_tag_prefix_in_output | Whether to include the tag prefix in the output.                                                                                                       | `true`         | `false`  |
+| tag_prefix                   | The tag prefix. This will be used when searching for existing releases in GitHub API. This should not be included in the version within the changelog. | `v`            | `false`  |
 
 ## Outputs
 | Name                     | Description                                                                      |

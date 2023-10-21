@@ -94,7 +94,8 @@ def check_release(version: str) -> bool:
         True if the release exists, False otherwise.
     """
     # Get the release from the GitHub API
-    github_api_url = f'https://api.github.com/repos/{REPOSITORY_NAME}/releases/tags/v{version}'
+    version_prefix = os.getenv('INPUT_TAG_PREFIX', 'v')
+    github_api_url = f'https://api.github.com/repos/{REPOSITORY_NAME}/releases/tags/{version_prefix}{version}'
     response = requests.get(github_api_url, headers=GITHUB_HEADERS)
 
     # Check if the release exists
@@ -343,9 +344,13 @@ def main() -> dict:
         release_build = push_event_details["release_build"]
         release_tag = f"{release_version}"
 
+    version_prefix = ''
+    if os.getenv('INPUT_INCLUDE_TAG_PREFIX_IN_OUTPUT', 'true').lower() == 'true':
+        version_prefix = os.getenv('INPUT_TAG_PREFIX', 'v')
+
     job_outputs['release_version'] = release_version
     job_outputs['release_build'] = release_build
-    job_outputs['release_tag'] = release_tag
+    job_outputs['release_tag'] = f'{version_prefix}{release_tag}'
 
     # Set the outputs
     for output_name, output_value in job_outputs.items():

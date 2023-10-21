@@ -15,6 +15,16 @@ inputs:
   github_token:
     description: "GitHub token to use for API requests."
     required: true
+  include_tag_prefix_in_output:
+    description: "Whether to include the tag prefix in the output."
+    default: 'true'
+    required: false
+  tag_prefix:
+    description: |
+      The tag prefix. This will be used when searching for existing releases in GitHub API.
+      This should not be included in the version within the changelog.
+    default: "v"
+    required: false
 
 outputs:
   changelog_changes:
