@@ -135,6 +135,9 @@ jobs:
 
   release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs:
+      - pytest
+      - action
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -149,7 +152,7 @@ jobs:
 
       - name: Create Release
         id: action
-        uses: LizardByte/create-release-action@master
+        uses: LizardByte/create-release-action@master  # keep this on master, to prevent endless depandabot PRs
         with:
           allowUpdates: false
           artifacts: ''
