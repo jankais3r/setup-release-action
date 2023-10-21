@@ -1,4 +1,5 @@
 # standard imports
+import json
 import os
 import re
 
@@ -8,6 +9,9 @@ import requests
 
 # Load the environment variables from the Environment File
 load_dotenv()
+
+# root directory of this action
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Get the repository name from the environment variables
 REPOSITORY_NAME = os.environ["GITHUB_REPOSITORY"]
@@ -100,21 +104,35 @@ def check_release(version: str) -> bool:
         return False
 
 
+def get_github_event() -> dict:
+    """
+    Get the GitHub event from the environment variables.
+
+    Returns
+    -------
+    dict
+        Dictionary containing the GitHub event.
+    """
+    github_event_path = os.getenv(
+        'GITHUB_EVENT_PATH', os.path.join(ROOT_DIR, 'dummy_github_event.json')
+    )
+    with open(github_event_path, 'r') as f:
+        github_event = json.load(f)
+    return github_event
+
+
 def get_repo_default_branch() -> str:
     """
-    Get the default branch of the repository from the GitHub API.
-
-    This function will get the default branch of the repository from the GitHub API.
+    Get the default branch of the repository from the GitHub event context.
 
     Returns
     -------
     str
         Default branch of the repository.
     """
-    github_api_url = f'https://api.github.com/repos/{REPOSITORY_NAME}'
-    response = requests.get(github_api_url, headers=GITHUB_HEADERS)
-    data = response.json()
-    return data["default_branch"]
+    # get default branch from event context
+    github_event = get_github_event()
+    return github_event['repository']['default_branch']
 
 
 def get_push_event_details() -> dict:
@@ -143,11 +161,18 @@ def get_push_event_details() -> dict:
 
     response = requests.get(github_api_url, headers=GITHUB_HEADERS, params=params)
     push_event = None
+
+    github_event = get_github_event()
+    if github_event["pull_request"]:
+        # set sha to the head sha of the pull request
+        github_sha = github_event["pull_request"]["head"]["sha"]
+    else:
+        github_sha = os.environ["GITHUB_SHA"]
+
     for event in response.json():
-        if event["type"] == "PushEvent" and \
-                event["payload"]["ref"] == f"refs/heads/{get_repo_default_branch()}" and \
-                event["payload"]["head"] == os.environ["GITHUB_SHA"]:
+        if event["type"] == "PushEvent" and event["payload"]["head"] == github_sha:
             push_event = event
+        if event["type"] == "PushEvent" and event["payload"]["ref"] == f"refs/heads/{get_repo_default_branch()}":
             break
 
     if push_event is None:
@@ -301,9 +326,13 @@ def main() -> dict:
     job_outputs['publish_stable_release'] = str(not release_exists)
 
     if release_exists:
-        # the changelog release exists, so we want to publish a pre-release instead
+        # the changelog release exists in GitHub
         append_github_step_summary(
             message=":warning: WARNING: The release in the changelog already exists. Defaulting to a pre-release.")
+
+    if release_exists or not changelog_exists:
+        # the changelog release exists, so we want to publish a pre-release
+        # or the changelog does not exist, so we want to publish a stable rolling release
         release_version = push_event_details["release_version"]
         release_build = push_event_details["release_build"]
         release_tag = f"{release_version}-{release_build}"

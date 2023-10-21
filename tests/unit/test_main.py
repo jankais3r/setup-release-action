@@ -32,7 +32,8 @@ def test_set_github_action_output(github_output_file, outputs):
 
 
 def test_check_if_changelog_exists(changelog_set):
-    assert main.check_if_changelog_exists(changelog_path=changelog_set['changelog_path'])
+    if changelog_set['changelog_expected']:
+        assert main.check_if_changelog_exists(changelog_path=changelog_set['changelog_path'])
 
 
 @pytest.mark.parametrize('version', [
@@ -51,12 +52,13 @@ def test_get_push_event_details(latest_commit):
 
 
 def test_parse_changelog(changelog_set):
-    changelog_data = main.parse_changelog(changelog_path=changelog_set['changelog_path'])
+    if changelog_set['changelog_expected']:
+        changelog_data = main.parse_changelog(changelog_path=changelog_set['changelog_path'])
 
-    assert changelog_data['version'] == changelog_set['version']
-    assert changelog_data['date'] == changelog_set['date']
-    assert changelog_data['url'] == changelog_set['url']
-    assert changelog_data['changes'] == changelog_set['changes']
+        assert changelog_data['version'] == changelog_set['version']
+        assert changelog_data['date'] == changelog_set['date']
+        assert changelog_data['url'] == changelog_set['url']
+        assert changelog_data['changes'] == changelog_set['changes']
 
 
 def test_main(changelog_set, github_output_file, github_step_summary_file, github_token):

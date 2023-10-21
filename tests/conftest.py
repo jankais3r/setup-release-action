@@ -63,7 +63,7 @@ def github_step_summary_file():
         fi.write('')
 
 
-@pytest.fixture(scope='function', params=[0, 1])
+@pytest.fixture(scope='function', params=[0, 1, 2])
 def changelog_set(request):
     change_set = request.param
 
@@ -75,10 +75,13 @@ def changelog_set(request):
 
     # copy the changelog to `github/workspace`
     os.makedirs(workspace_dir, exist_ok=True)
-    shutil.copyfile(
-        src=os.path.join(set_dir, 'CHANGELOG.md'),
-        dst=os.path.join(workspace_dir, 'CHANGELOG.md')
-    )
+    try:
+        shutil.copyfile(
+            src=os.path.join(set_dir, 'CHANGELOG.md'),
+            dst=os.path.join(workspace_dir, 'CHANGELOG.md')
+        )
+    except FileNotFoundError:
+        pass  # set0 does not have a CHANGELOG.md file
 
     # read the version from the version.txt file
     with open(os.path.join(set_dir, 'version.txt'), 'r') as f:
@@ -97,6 +100,7 @@ def changelog_set(request):
         changes = f.read().strip()
 
     fixture = dict(
+        changelog_expected=True if change_set > 0 else False,
         changelog_path=os.path.join(workspace_dir, 'CHANGELOG.md'),
         version=version,
         date=date,

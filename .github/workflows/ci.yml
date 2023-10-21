@@ -58,6 +58,7 @@ jobs:
         set:
           - '0'
           - '1'
+          - '2'
 
     runs-on: ubuntu-latest
     steps:
@@ -90,8 +91,10 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ steps.action.outputs.changelog_exists }}" != "True" ]]; then
-            echo "changelog_exists is not true"
-            exit 1
+            if [[ "${{ matrix.set }}" != "0" ]]; then
+              echo "changelog_exists is not true"
+              exit 1
+            fi
           fi
 
       - name: Verify changelog_changes

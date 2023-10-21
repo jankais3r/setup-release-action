@@ -1,1 +1,1 @@
-https://github.com/LizardByte/Sunshine/releases/tag/v0.20.0
+https://github.com/octocat/Hello-World/releases/tag/v0.1.0
