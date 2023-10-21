@@ -127,3 +127,20 @@ def latest_commit(github_token):
     commit = data[0]['sha']
     os.environ['GITHUB_SHA'] = commit
     return commit
+
+
+@pytest.fixture(scope='function', params=[True, False])
+def github_event_path(request):
+    # true is original file from GitHub context
+    # false is dummy file
+
+    original_value = os.environ['GITHUB_EVENT_PATH']
+    if request.param:
+        yield
+    else:
+        os.environ['GITHUB_EVENT_PATH'] = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            'dummy_github_event.json'
+        )
+        yield
+        os.environ['GITHUB_EVENT_PATH'] = original_value

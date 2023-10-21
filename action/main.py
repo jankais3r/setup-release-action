@@ -163,10 +163,11 @@ def get_push_event_details() -> dict:
     push_event = None
 
     github_event = get_github_event()
-    if github_event["pull_request"]:
+    try:
         # set sha to the head sha of the pull request
         github_sha = github_event["pull_request"]["head"]["sha"]
-    else:
+    except KeyError:
+        # not a pull request event
         github_sha = os.environ["GITHUB_SHA"]
 
     for event in response.json():

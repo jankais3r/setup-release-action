@@ -47,7 +47,7 @@ def test_get_repo_default_branch(github_token):
     assert main.get_repo_default_branch() == 'master'
 
 
-def test_get_push_event_details(latest_commit):
+def test_get_push_event_details(github_event_path, latest_commit):
     assert main.get_push_event_details()
 
 
