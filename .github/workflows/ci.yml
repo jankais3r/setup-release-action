@@ -160,6 +160,6 @@ jobs:
           discussionCategory: announcements
           generateReleaseNotes: true
           name: ${{ steps.setup-release.outputs.release_tag }}
-          prerelease: ${{ steps.setup-release.outputs.publish_stable_release != 'True' }}
+          prerelease: ${{ steps.setup-release.outputs.publish_stable_release != 'true' }}
           tag: ${{ steps.setup-release.outputs.release_tag }}
           token: ${{ secrets.GH_BOT_TOKEN }}

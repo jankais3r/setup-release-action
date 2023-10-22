@@ -47,18 +47,23 @@ The action does the following:
 | tag_prefix                   | The tag prefix. This will be used when searching for existing releases in GitHub API. This should not be included in the version within the changelog. | `v`            | `false`  |
 
 ## Outputs
-| Name                     | Description                                                                      |
-|--------------------------|----------------------------------------------------------------------------------|
-| changelog_changes        | The changes for the latest version in the changelog                              |
-| changelog_date           | The date for the latest version in the changelog                                 |
-| changelog_exists         | Whether or not the changelog file exists                                         |
-| changelog_release_exists | Whether or not the latest version is a GitHub release                            |
-| changelog_url            | The url for the latest version in the changelog                                  |
-| changelog_version        | The version for the latest version in the changelog                              |
-| publish_stable_release   | Whether or not to publish a stable release                                       |
-| release_build            | The build number to identify this build (i.e. first 7 characters of commit hash) |
-| release_tag              | The tag for the release (i.e. `release_version`-`release_build`)                 |
-| release_version          | The version for the release (i.e. `yyyy.m.d` or `changelog_version`)             |
+| Name                           | Description                                                                        |
+|--------------------------------|------------------------------------------------------------------------------------|
+| changelog_changes              | The changes for the latest version in the changelog                                |
+| changelog_date                 | The date for the latest version in the changelog                                   |
+| changelog_exists               | Whether or not the changelog file exists                                           |
+| changelog_release_exists       | Whether or not the latest version is a GitHub release                              |
+| changelog_url                  | The url for the latest version in the changelog                                    |
+| changelog_version              | The version for the latest version in the changelog                                |
+| publish_pre_release            | Whether or not to publish a pre-release. The opposite of `publish_stable_release`. |
+| publish_release                | Whether or not to publish a release                                                |
+| publish_stable_release         | Whether or not to publish a stable release. The opposite of `publish_pre_release`. |
+| release_body                   | The body for the release                                                           |
+| release_build                  | The build number to identify this build (i.e. first 7 characters of commit hash)   |
+| release_commit                 | The commit hash for the release                                                    |
+| release_generate_release_notes | Whether or not to generate release notes for the release                           |
+| release_tag                    | The tag for the release (i.e. `release_version`-`release_build`)                   |
+| release_version                | The version for the release (i.e. `yyyy.m.d` or `changelog_version`)               |
 
 ## Basic Flow
 ```mermaid
@@ -92,57 +97,80 @@ F --> G
 graph TD
 
 subgraph "Set GitHub Outputs"
-  A{Changelog Exists?}
-  B(changelog_exists = 'True')
-  C(changelog_changes = \list of changes\)
-  D(changelog_date = \date from changelog\)
-  E(changelog_url = \url from changelog\)
-  F(changelog_version = \version from changelog\)
+  A1{Changelog Exists?}
+  A2(changelog_exists = 'True')
+  A3(changelog_changes = \list of changes\)
+  A4(changelog_date = \date from changelog\)
+  A5(changelog_url = \url from changelog\)
+  A6(changelog_version = \version from changelog\)
 
-  I(changelog_exists = 'False')
-  J(changelog_changes = '')
-  K(changelog_date = '')
-  L(changelog_url = '')
-  M(changelog_version = '')
+  B1(changelog_exists = 'False')
+  B2(changelog_changes = '')
+  B3(changelog_date = '')
+  B4(changelog_url = '')
+  B5(changelog_version = '')
 
-  N(release_build = \commit 0-7\)
+  C1(release_build = \commit 0-7\)
+  C2(release_commit = \commit\ )
 
-  O{GitHub Release Exists?}
-  P(changelog_release_exists = 'True')
-  Q(publish_stable_release = 'False')
-  R(release_version = 'yyyy.m.d')
-  S(release_tag = `release_version`-`release_build`)
+  D1{GitHub Release Exists?}
+  D2(changelog_release_exists = 'true')
+  D3(publish_pre_release = 'true')
+  D4(publish_stable_release = 'false')
+  D5(release_body = '')
+  D6(release_generate_release_notes = 'true')
+  D7(release_version = 'yyyy.m.d')
+  D8(release_tag = `release_version`-`release_build`)
 
-  U(changelog_release_exists = 'False')
-  V(publish_stable_release = 'True')
-  W(release_version = \changelog version\)
-  X(release_tag = `release_version`)
+  E1(changelog_release_exists = 'false')
+  E2(publish_pre_release = 'false')
+  E3(publish_stable_release = 'true')
+  E4(release_body = changelog_changes if changelog exists else '')
+  E5(release_generate_release_notes = 'false' if changelog exists else 'true')
+  E6(release_version = \changelog version\)
+  E7(release_tag = `release_version`)
+
+  F1{Push Event?}
+  F2(publish_release = 'true')
+  F3(publish_release = 'false')
 end
 
-A --> |True| B
-B --> C
-C --> D
-D --> E
-E --> F
-F --> N
+A1 --> |True| A2
+A2 --> A3
+A3 --> A4
+A4 --> A5
+A5 --> A6
+A6 --> C1
 
-A --> |False| I
-I --> J
-J --> K
-K --> L
-L --> M
-M --> N
+A1 --> |False| B1
+B1 --> B2
+B2 --> B3
+B3 --> B4
+B4 --> B5
+B5 --> C1
 
-N --> O
+C1 --> C2
+C2--> D1
 
-O --> |True| P
-P --> Q
-Q --> R
-R --> S
+D1 --> |True| D2
+D2 --> D3
+D3 --> D4
+D4 --> D5
+D5 --> D6
+D6 --> D7
+D7 --> D8
+D8 --> F1
 
-O --> |False| U
-U --> V
-V --> W
-W --> X
+D1 --> |False| E1
+E1 --> E2
+E2 --> E3
+E3 --> E4
+E4 --> E5
+E5 --> E6
+E6 --> E7
+E7 --> F1
+
+F1 --> |True| F2
+F1 --> |False| F3
 
 ```

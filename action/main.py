@@ -149,8 +149,10 @@ def get_push_event_details() -> dict:
     """
     # default
     push_event_details = dict(
-        release_version='',
+        publish_release=False,
         release_build='',
+        release_commit='',
+        release_version='',
     )
 
     github_api_url = f'https://api.github.com/repos/{REPOSITORY_NAME}/events'
@@ -170,6 +172,8 @@ def get_push_event_details() -> dict:
     except KeyError:
         # not a pull request event
         github_sha = os.environ["GITHUB_SHA"]
+        push_event_details['publish_release'] = True
+    push_event_details['release_commit'] = github_sha
 
     for event in response.json():
         if event["type"] == "PushEvent" and event["payload"]["head"] == github_sha:
@@ -195,10 +199,8 @@ def get_push_event_details() -> dict:
         day = match.group(3).zfill(2)  # Ensure day is zero-padded to two digits
         release_version = f"{year}.{month}.{day}"
 
-    push_event_details = dict(
-        release_version=release_version,
-        release_build=push_event["payload"]["head"][0:7],
-    )
+    push_event_details['release_version'] = release_version
+    push_event_details['release_build'] = push_event["payload"]["head"][0:7]
     return push_event_details
 
 
@@ -325,7 +327,8 @@ def main() -> dict:
         job_outputs['changelog_version'] = ''
 
     job_outputs['changelog_release_exists'] = str(release_exists)
-    job_outputs['publish_stable_release'] = str(not release_exists)
+    job_outputs['publish_pre_release'] = str(release_exists).lower()
+    job_outputs['publish_stable_release'] = str(not release_exists).lower()
 
     if release_exists:
         # the changelog release exists in GitHub
@@ -335,11 +338,15 @@ def main() -> dict:
     if release_exists or not changelog_exists:
         # the changelog release exists, so we want to publish a pre-release
         # or the changelog does not exist, so we want to publish a stable rolling release
+        release_body = ''
+        release_generate_release_notes = True
         release_version = push_event_details["release_version"]
         release_build = push_event_details["release_build"]
         release_tag = f"{release_version}-{release_build}"
     else:
         # the changelog release does not exist, so we want to publish a stable release
+        release_body = changelog_data["changes"]
+        release_generate_release_notes = False
         release_version = changelog_data["version"] if changelog_data else ''
         release_build = push_event_details["release_build"]
         release_tag = f"{release_version}"
@@ -348,6 +355,10 @@ def main() -> dict:
     if os.getenv('INPUT_INCLUDE_TAG_PREFIX_IN_OUTPUT', 'true').lower() == 'true':
         version_prefix = os.getenv('INPUT_TAG_PREFIX', 'v')
 
+    job_outputs['publish_release'] = str(push_event_details['publish_release']).lower()
+    job_outputs['release_body'] = release_body
+    job_outputs['release_commit'] = push_event_details['release_commit']
+    job_outputs['release_generate_release_notes'] = str(release_generate_release_notes).lower()
     job_outputs['release_version'] = release_version
     job_outputs['release_build'] = release_build
     job_outputs['release_tag'] = f'{version_prefix}{release_tag}'
