@@ -365,6 +365,8 @@ def main() -> dict:
 
     # Set the outputs
     for output_name, output_value in job_outputs.items():
+        # debug print
+        print(f'::debug::Setting output {output_name} to {output_value}')
         set_github_action_output(output_name=output_name, output_value=output_value)
 
     return job_outputs
