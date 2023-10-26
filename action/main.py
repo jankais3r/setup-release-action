@@ -189,18 +189,24 @@ def get_push_event_details() -> dict:
         else:
             return push_event_details
 
-    # use regex and convert created at to yyyy.m.d
-    match = re.search(r'(\d{4})-(\d{1,2})-(\d{1,2})', push_event["created_at"])
+    # use regex and convert created at to yyyy.m.d-hhmmss
+    # created_at: "2023-1-25T10:43:35Z"
+    match = re.search(r'(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{2}):(\d{2})Z', push_event["created_at"])
 
     release_version = ''
+    release_build = ''
     if match:
-        year = match.group(1)
-        month = match.group(2).zfill(2)  # Ensure month is zero-padded to two digits
-        day = match.group(3).zfill(2)  # Ensure day is zero-padded to two digits
+        year = int(match.group(1))
+        month = int(match.group(2))
+        day = int(match.group(3))
+        hour = match.group(4).zfill(2)
+        minute = match.group(5).zfill(2)
+        second = match.group(6).zfill(2)
         release_version = f"{year}.{month}.{day}"
+        release_build = f"{hour}{minute}{second}"
 
     push_event_details['release_version'] = release_version
-    push_event_details['release_build'] = push_event["payload"]["head"][0:7]
+    push_event_details['release_build'] = release_build
     return push_event_details
 
 
