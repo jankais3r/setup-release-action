@@ -150,7 +150,6 @@ def get_push_event_details() -> dict:
     # default
     push_event_details = dict(
         publish_release=False,
-        release_build='',
         release_commit='',
         release_version='',
     )
@@ -194,19 +193,17 @@ def get_push_event_details() -> dict:
     match = re.search(r'(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{2}):(\d{2})Z', push_event["created_at"])
 
     release_version = ''
-    release_build = ''
     if match:
         year = int(match.group(1))
-        month = int(match.group(2))
-        day = int(match.group(3))
+        month = match.group(2).zfill(2)
+        day = match.group(3).zfill(2)
         hour = match.group(4).zfill(2)
         minute = match.group(5).zfill(2)
         second = match.group(6).zfill(2)
-        release_version = f"{year}.{month}.{day}"
-        release_build = f"{hour}{minute}{second}"
+        build = f"{hour}{minute}{second}"
+        release_version = f"{year}.{int(month)}{day}.{int(build)}"
 
     push_event_details['release_version'] = release_version
-    push_event_details['release_build'] = release_build
     return push_event_details
 
 
@@ -347,14 +344,12 @@ def main() -> dict:
         release_body = ''
         release_generate_release_notes = True
         release_version = push_event_details["release_version"]
-        release_build = push_event_details["release_build"]
-        release_tag = f"{release_version}-{release_build}"
+        release_tag = f"{release_version}"
     else:
         # the changelog release does not exist, so we want to publish a stable release
         release_body = changelog_data["changes"]
         release_generate_release_notes = False
         release_version = changelog_data["version"] if changelog_data else ''
-        release_build = push_event_details["release_build"]
         release_tag = f"{release_version}"
 
     version_prefix = ''
@@ -366,7 +361,6 @@ def main() -> dict:
     job_outputs['release_commit'] = push_event_details['release_commit']
     job_outputs['release_generate_release_notes'] = str(release_generate_release_notes).lower()
     job_outputs['release_version'] = release_version
-    job_outputs['release_build'] = release_build
     job_outputs['release_tag'] = f'{version_prefix}{release_tag}'
 
     # Set the outputs

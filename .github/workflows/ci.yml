@@ -84,7 +84,6 @@ jobs:
           echo "changelog_release_exists: ${{ steps.action.outputs.changelog_release_exists }}"
           echo "publish_stable_release: ${{ steps.action.outputs.publish_stable_release }}"
           echo "release_version: ${{ steps.action.outputs.release_version }}"
-          echo "release_build: ${{ steps.action.outputs.release_build }}"
           echo "release_tag: ${{ steps.action.outputs.release_tag }}"
 
       - name: Verify changelog_exists

@@ -59,11 +59,10 @@ The action does the following:
 | publish_release                | Whether or not to publish a release                                                |
 | publish_stable_release         | Whether or not to publish a stable release. The opposite of `publish_pre_release`. |
 | release_body                   | The body for the release                                                           |
-| release_build                  | The build number to identify this build (i.e. `hhmmss`)                            |
 | release_commit                 | The commit hash for the release                                                    |
 | release_generate_release_notes | Whether or not to generate release notes for the release                           |
-| release_tag                    | The tag for the release (i.e. `release_version`-`release_build`)                   |
-| release_version                | The version for the release (i.e. `yyyy.m.d` or `changelog_version`)               |
+| release_tag                    | The tag for the release (i.e. `release_version`)                                   |
+| release_version                | The version for the release (i.e. `yyyy.mmdd.hhmmss` or `changelog_version`)       |
 
 ## Basic Flow
 ```mermaid
@@ -110,8 +109,7 @@ subgraph "Set GitHub Outputs"
   B4(changelog_url = '')
   B5(changelog_version = '')
 
-  C1(release_build = \hhmmss\)
-  C2(release_commit = \commit\ )
+  C1(release_commit = \commit\ )
 
   D1{GitHub Release Exists?}
   D2(changelog_release_exists = 'true')
@@ -120,7 +118,7 @@ subgraph "Set GitHub Outputs"
   D5(release_body = '')
   D6(release_generate_release_notes = 'true')
   D7(release_version = 'yyyy.m.d')
-  D8(release_tag = `release_version`-`release_build`)
+  D8(release_tag = `release_version`)
 
   E1(changelog_release_exists = 'false')
   E2(publish_pre_release = 'false')
@@ -149,8 +147,7 @@ B3 --> B4
 B4 --> B5
 B5 --> C1
 
-C1 --> C2
-C2--> D1
+C1--> D1
 
 D1 --> |True| D2
 D2 --> D3

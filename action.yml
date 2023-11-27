@@ -41,8 +41,6 @@ outputs:
     description: "Latest version in the changelog."
   publish_stable_release:
     description: "Whether to publish a stable release."
-  release_build:
-    description: "Build number of the release to make."
   release_tag:
     description: "Tag of the release to make. e.g. `vYYYY.M.D-Build` or `vYYYY.M.D`"
   release_version:
