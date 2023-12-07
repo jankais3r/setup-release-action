@@ -47,7 +47,7 @@ def test_get_repo_default_branch(github_token):
     assert main.get_repo_default_branch() == 'master'
 
 
-def test_get_push_event_details(github_event_path, latest_commit):
+def test_get_push_event_details(github_event_path, input_dotnet, latest_commit):
     assert main.get_push_event_details()
 
 
@@ -61,7 +61,7 @@ def test_parse_changelog(changelog_set):
         assert changelog_data['changes'] == changelog_set['changes']
 
 
-def test_main(changelog_set, github_output_file, github_step_summary_file, github_token):
+def test_main(changelog_set, github_output_file, github_step_summary_file, github_token, input_dotnet):
     job_outputs = main.main()
 
     with open(github_output_file, 'r') as f:

@@ -41,6 +41,7 @@ The action does the following:
 | Name                         | Description                                                                                                                                            | Default        | Required |
 |------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|----------|
 | changelog_path               | The path to the changelog file                                                                                                                         | `CHANGELOG.md` | `false`  |
+| dotnet                       | Whether to create a dotnet version (4 components, e.g. yyyy.mmdd.hhmm.ss).                                                                             | `false`        | `false`  |
 | fail_on_events_api_error     | Fail if the action cannot find this commit in the events API                                                                                           | `false`        | `false`  |
 | github_token                 | The GitHub token to use for API calls                                                                                                                  |                | `true`   |
 | include_tag_prefix_in_output | Whether to include the tag prefix in the output.                                                                                                       | `true`         | `false`  |
@@ -61,7 +62,7 @@ The action does the following:
 | release_body                   | The body for the release                                                           |
 | release_commit                 | The commit hash for the release                                                    |
 | release_generate_release_notes | Whether or not to generate release notes for the release                           |
-| release_tag                    | The tag for the release (i.e. `release_version`)                                   |
+| release_tag                    | The tag for the release (i.e. `release_version` with prefix)                       |
 | release_version                | The version for the release (i.e. `yyyy.mmdd.hhmmss` or `changelog_version`)       |
 
 ## Basic Flow
@@ -117,7 +118,7 @@ subgraph "Set GitHub Outputs"
   D4(publish_stable_release = 'false')
   D5(release_body = '')
   D6(release_generate_release_notes = 'true')
-  D7(release_version = 'yyyy.m.d')
+  D7(release_version = 'yyyy.md.hhmmss')
   D8(release_tag = `release_version`)
 
   E1(changelog_release_exists = 'false')

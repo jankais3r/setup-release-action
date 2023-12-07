@@ -200,8 +200,15 @@ def get_push_event_details() -> dict:
         hour = match.group(4).zfill(2)
         minute = match.group(5).zfill(2)
         second = match.group(6).zfill(2)
-        build = f"{hour}{minute}{second}"
-        release_version = f"{year}.{int(month)}{day}.{int(build)}"
+        if os.getenv('INPUT_DOTNET', 'false').lower() == 'true':
+            # dotnet versioning
+            build = f"{hour}{minute}"
+            revision = second
+            release_version = f"{year}.{int(month)}{day}.{int(build)}.{int(revision)}"
+        else:
+            # default versioning
+            build = f"{hour}{minute}{second}"
+            release_version = f"{year}.{int(month)}{day}.{int(build)}"
 
     push_event_details['release_version'] = release_version
     return push_event_details

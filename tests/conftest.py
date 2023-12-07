@@ -144,3 +144,11 @@ def github_event_path(request):
         )
         yield
         os.environ['GITHUB_EVENT_PATH'] = original_value
+
+
+@pytest.fixture(params=[True, False], scope='function')
+def input_dotnet(request):
+    os.environ['INPUT_DOTNET'] = str(request.param).lower()
+    yield
+
+    del os.environ['INPUT_DOTNET']
