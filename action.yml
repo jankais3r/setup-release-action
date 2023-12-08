@@ -14,7 +14,7 @@ inputs:
     required: false
   fail_on_events_api_error:
     description: "Whether to fail if the GitHub Events API returns an error."
-    default: 'false'
+    default: 'true'
     required: false
   github_token:
     description: "GitHub token to use for API requests."
