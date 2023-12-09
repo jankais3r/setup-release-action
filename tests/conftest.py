@@ -14,11 +14,13 @@ os.environ['GITHUB_OUTPUT'] = 'github_output.md'
 os.environ['GITHUB_STEP_SUMMARY'] = 'github_step_summary.md'
 os.environ['GITHUB_WORKSPACE'] = os.path.join(os.getcwd(), 'github', 'workspace')
 os.environ['INPUT_CHANGELOG_PATH'] = 'CHANGELOG.md'
+os.environ['INPUT_EVENT_API_MAX_ATTEMPTS'] = '1'
 
 try:
     GITHUB_TOKEN = os.environ['INPUT_GITHUB_TOKEN']
 except KeyError:
-    GITHUB_TOKEN = os.environ['INPUT_GITHUB_TOKEN'] = ''
+    os.environ['INPUT_GITHUB_TOKEN'] = ''
+    GITHUB_TOKEN = os.environ['INPUT_GITHUB_TOKEN']
 
 GITHUB_HEADERS = {'Authorization': f'token {GITHUB_TOKEN}'}
 

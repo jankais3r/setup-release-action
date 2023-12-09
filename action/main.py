@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import time
 
 # lib imports
 from dotenv import load_dotenv
@@ -161,9 +162,6 @@ def get_push_event_details() -> dict:
         "per_page": 100
     }
 
-    response = requests.get(github_api_url, headers=GITHUB_HEADERS, params=params)
-    push_event = None
-
     github_event = get_github_event()
     try:
         # set sha to the head sha of the pull request
@@ -174,14 +172,22 @@ def get_push_event_details() -> dict:
         push_event_details['publish_release'] = True
     push_event_details['release_commit'] = github_sha
 
-    for event in response.json():
-        if event["type"] == "PushEvent" and event["payload"]["head"] == github_sha:
-            push_event = event
-        if event["type"] == "PushEvent" and event["payload"]["ref"] == f"refs/heads/{get_repo_default_branch()}":
-            break
+    attempt = 0
+    push_event = None
+    while push_event is None and attempt < int(os.getenv('INPUT_EVENT_API_MAX_ATTEMPTS', 5)):
+        time.sleep(10)
+        response = requests.get(github_api_url, headers=GITHUB_HEADERS, params=params)
+
+        for event in response.json():
+            if event["type"] == "PushEvent" and event["payload"]["head"] == github_sha:
+                push_event = event
+            if event["type"] == "PushEvent" and event["payload"]["ref"] == f"refs/heads/{get_repo_default_branch()}":
+                break
+
+        attempt += 1
 
     if push_event is None:
-        msg = ":exclamation: ERROR: Push event not found in the GitHub API."
+        msg = f":exclamation: ERROR: Push event not found in the GitHub API after {attempt} attempts."
         append_github_step_summary(message=msg)
         if os.getenv('INPUT_FAIL_ON_EVENTS_API_ERROR', 'false').lower() == 'true':
             raise SystemExit(msg)

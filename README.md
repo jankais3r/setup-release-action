@@ -42,6 +42,7 @@ The action does the following:
 |------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|----------|
 | changelog_path               | The path to the changelog file                                                                                                                         | `CHANGELOG.md` | `false`  |
 | dotnet                       | Whether to create a dotnet version (4 components, e.g. yyyy.mmdd.hhmm.ss).                                                                             | `false`        | `false`  |
+| event_api_max_attempts       | Maximum number of attempts for the GitHub Events API.                                                                                                  | `5`            | `false`  |
 | fail_on_events_api_error     | Fail if the action cannot find this commit in the events API                                                                                           | `true`         | `false`  |
 | github_token                 | The GitHub token to use for API calls                                                                                                                  |                | `true`   |
 | include_tag_prefix_in_output | Whether to include the tag prefix in the output.                                                                                                       | `true`         | `false`  |
