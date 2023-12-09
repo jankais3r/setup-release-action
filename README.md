@@ -40,11 +40,11 @@ The action does the following:
 ## Inputs
 | Name                         | Description                                                                                                                                            | Default        | Required |
 |------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|----------|
-| changelog_path               | The path to the changelog file                                                                                                                         | `CHANGELOG.md` | `false`  |
+| changelog_path               | Path to the changelog file, relative to the GitHub workspace.                                                                                          | `CHANGELOG.md` | `false`  |
 | dotnet                       | Whether to create a dotnet version (4 components, e.g. yyyy.mmdd.hhmm.ss).                                                                             | `false`        | `false`  |
 | event_api_max_attempts       | Maximum number of attempts for the GitHub Events API.                                                                                                  | `5`            | `false`  |
-| fail_on_events_api_error     | Fail if the action cannot find this commit in the events API                                                                                           | `true`         | `false`  |
-| github_token                 | The GitHub token to use for API calls                                                                                                                  |                | `true`   |
+| fail_on_events_api_error     | Whether to fail if the GitHub Events API returns an error. Will only fail for push events.                                                             | `true`         | `false`  |
+| github_token                 | GitHub token to use for API requests.                                                                                                                  |                | `true`   |
 | include_tag_prefix_in_output | Whether to include the tag prefix in the output.                                                                                                       | `true`         | `false`  |
 | tag_prefix                   | The tag prefix. This will be used when searching for existing releases in GitHub API. This should not be included in the version within the changelog. | `v`            | `false`  |
 

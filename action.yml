@@ -17,7 +17,7 @@ inputs:
     default: '5'
     required: false
   fail_on_events_api_error:
-    description: "Whether to fail if the GitHub Events API returns an error."
+    description: "Whether to fail if the GitHub Events API returns an error. Will only fail for push events."
     default: 'true'
     required: false
   github_token:

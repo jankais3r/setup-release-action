@@ -51,6 +51,17 @@ def test_get_push_event_details(github_event_path, input_dotnet, latest_commit):
     assert main.get_push_event_details()
 
 
+def test_get_push_event_details_no_event(dummy_github_event_path, dummy_commit):
+    result = main.get_push_event_details()
+    assert result['publish_release'] is False
+    assert result['release_version'] == ''
+
+
+def test_get_push_event_details_fail_on_error(dummy_github_event_path, dummy_commit, fail_on_events_api_error):
+    with pytest.raises(SystemExit):
+        main.get_push_event_details()
+
+
 def test_parse_changelog(changelog_set):
     if changelog_set['changelog_expected']:
         changelog_data = main.parse_changelog(changelog_path=changelog_set['changelog_path'])

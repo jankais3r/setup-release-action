@@ -15,6 +15,7 @@ os.environ['GITHUB_STEP_SUMMARY'] = 'github_step_summary.md'
 os.environ['GITHUB_WORKSPACE'] = os.path.join(os.getcwd(), 'github', 'workspace')
 os.environ['INPUT_CHANGELOG_PATH'] = 'CHANGELOG.md'
 os.environ['INPUT_EVENT_API_MAX_ATTEMPTS'] = '1'
+os.environ['INPUT_FAIL_ON_EVENTS_API_ERROR'] = 'false'
 
 try:
     GITHUB_TOKEN = os.environ['INPUT_GITHUB_TOKEN']
@@ -23,6 +24,9 @@ except KeyError:
     GITHUB_TOKEN = os.environ['INPUT_GITHUB_TOKEN']
 
 GITHUB_HEADERS = {'Authorization': f'token {GITHUB_TOKEN}'}
+
+# globals
+COMMIT = None
 
 
 def pytest_runtest_setup(item):
@@ -116,19 +120,33 @@ def changelog_set(request):
     shutil.rmtree(workspace_dir)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def latest_commit(github_token):
-    # get commits on the default branch
-    github_api_url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/commits"
-    response = requests.get(
-        url=github_api_url,
-        headers=GITHUB_HEADERS,
-        params={'sha': 'master'},
-    )
-    data = response.json()
-    commit = data[0]['sha']
-    os.environ['GITHUB_SHA'] = commit
-    return commit
+    global COMMIT
+
+    if not COMMIT:
+        # get commits on the default branch
+        github_api_url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/commits"
+        response = requests.get(
+            url=github_api_url,
+            headers=GITHUB_HEADERS,
+            params={'sha': 'master'},
+        )
+        data = response.json()
+        COMMIT = data[0]['sha']
+
+    os.environ['GITHUB_SHA'] = COMMIT
+    yield COMMIT
+
+    del os.environ['GITHUB_SHA']
+
+
+@pytest.fixture(scope='function')
+def dummy_commit():
+    os.environ['GITHUB_SHA'] = 'not-a-real-commit'
+    yield
+
+    del os.environ['GITHUB_SHA']
 
 
 @pytest.fixture(scope='function', params=[True, False])
@@ -146,6 +164,24 @@ def github_event_path(request):
         )
         yield
         os.environ['GITHUB_EVENT_PATH'] = original_value
+
+
+@pytest.fixture(scope='function')
+def dummy_github_event_path():
+    original_value = os.environ['GITHUB_EVENT_PATH']
+    os.environ['GITHUB_EVENT_PATH'] = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        'dummy_github_event.json'
+    )
+    yield
+    os.environ['GITHUB_EVENT_PATH'] = original_value
+
+
+@pytest.fixture(scope='function')
+def fail_on_events_api_error():
+    os.environ['INPUT_FAIL_ON_EVENTS_API_ERROR'] = 'true'
+    yield
+    os.environ['INPUT_FAIL_ON_EVENTS_API_ERROR'] = 'false'
 
 
 @pytest.fixture(params=[True, False], scope='function')

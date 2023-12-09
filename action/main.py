@@ -163,36 +163,45 @@ def get_push_event_details() -> dict:
     }
 
     github_event = get_github_event()
+
+    is_pull_request = True if github_event.get("pull_request") else False
+
     try:
         # set sha to the head sha of the pull request
         github_sha = github_event["pull_request"]["head"]["sha"]
     except KeyError:
         # not a pull request event
         github_sha = os.environ["GITHUB_SHA"]
-        push_event_details['publish_release'] = True
     push_event_details['release_commit'] = github_sha
 
-    attempt = 0
-    push_event = None
-    while push_event is None and attempt < int(os.getenv('INPUT_EVENT_API_MAX_ATTEMPTS', 5)):
-        time.sleep(10)
-        response = requests.get(github_api_url, headers=GITHUB_HEADERS, params=params)
+    if not is_pull_request:  # this is a push event
+        attempt = 0
+        push_event = None
+        while push_event is None and attempt < int(os.getenv('INPUT_EVENT_API_MAX_ATTEMPTS', 5)):
+            time.sleep(10)
+            response = requests.get(github_api_url, headers=GITHUB_HEADERS, params=params)
 
-        for event in response.json():
-            if event["type"] == "PushEvent" and event["payload"]["head"] == github_sha:
-                push_event = event
-            if event["type"] == "PushEvent" and event["payload"]["ref"] == f"refs/heads/{get_repo_default_branch()}":
-                break
+            for event in response.json():
+                if event["type"] == "PushEvent" and event["payload"]["head"] == github_sha:
+                    push_event = event
+                if event["type"] == "PushEvent" and \
+                        event["payload"]["ref"] == f"refs/heads/{get_repo_default_branch()}":
+                    break
 
-        attempt += 1
+            attempt += 1
 
-    if push_event is None:
-        msg = f":exclamation: ERROR: Push event not found in the GitHub API after {attempt} attempts."
-        append_github_step_summary(message=msg)
-        if os.getenv('INPUT_FAIL_ON_EVENTS_API_ERROR', 'false').lower() == 'true':
-            raise SystemExit(msg)
-        else:
-            return push_event_details
+        if push_event is None:
+            msg = f":exclamation: ERROR: Push event not found in the GitHub API after {attempt} attempts."
+            append_github_step_summary(message=msg)
+            if os.getenv('INPUT_FAIL_ON_EVENTS_API_ERROR', 'false').lower() == 'true':
+                raise SystemExit(msg)
+            else:
+                return push_event_details
+    else:  # this is a pull request
+        return push_event_details
+
+    # not a pull request
+    push_event_details['publish_release'] = True
 
     # use regex and convert created at to yyyy.m.d-hhmmss
     # created_at: "2023-1-25T10:43:35Z"
