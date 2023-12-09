@@ -374,7 +374,7 @@ def main() -> dict:
     job_outputs['release_commit'] = push_event_details['release_commit']
     job_outputs['release_generate_release_notes'] = str(release_generate_release_notes).lower()
     job_outputs['release_version'] = release_version
-    job_outputs['release_tag'] = f'{version_prefix}{release_tag}'
+    job_outputs['release_tag'] = f'{version_prefix if release_tag else ""}{release_tag}'
 
     # Set the outputs
     for output_name, output_value in job_outputs.items():
