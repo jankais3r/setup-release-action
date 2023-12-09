@@ -70,6 +70,7 @@ jobs:
         uses: ./
         with:
           changelog_path: ./tests/data/set${{ matrix.set }}/CHANGELOG.md
+          fail_on_events_api_error: false  # these scenarios do not exist in the GitHub events api
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print action outputs
