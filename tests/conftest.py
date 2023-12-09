@@ -123,6 +123,7 @@ def changelog_set(request):
 @pytest.fixture(scope='function')
 def latest_commit(github_token):
     global COMMIT
+    original_sha = os.environ.get('GITHUB_SHA', '')
 
     if not COMMIT:
         # get commits on the default branch
@@ -138,15 +139,16 @@ def latest_commit(github_token):
     os.environ['GITHUB_SHA'] = COMMIT
     yield COMMIT
 
-    del os.environ['GITHUB_SHA']
+    os.environ['GITHUB_SHA'] = original_sha
 
 
 @pytest.fixture(scope='function')
 def dummy_commit():
+    original_sha = os.environ.get('GITHUB_SHA', '')
     os.environ['GITHUB_SHA'] = 'not-a-real-commit'
     yield
 
-    del os.environ['GITHUB_SHA']
+    os.environ['GITHUB_SHA'] = original_sha
 
 
 @pytest.fixture(scope='function', params=[True, False])
