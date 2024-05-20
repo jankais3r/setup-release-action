@@ -31,11 +31,6 @@ def test_set_github_action_output(github_output_file, outputs):
     assert output.endswith(f"{outputs[0]}<<EOF\n{outputs[1]}\nEOF\n")
 
 
-def test_check_if_changelog_exists(changelog_set):
-    if changelog_set['changelog_expected']:
-        assert main.check_if_changelog_exists(changelog_path=changelog_set['changelog_path'])
-
-
 @pytest.mark.parametrize('version', [
     ('1970.1.1', False),
 ])
@@ -62,17 +57,7 @@ def test_get_push_event_details_fail_on_error(dummy_github_event_path, dummy_com
         main.get_push_event_details()
 
 
-def test_parse_changelog(changelog_set):
-    if changelog_set['changelog_expected']:
-        changelog_data = main.parse_changelog(changelog_path=changelog_set['changelog_path'])
-
-        assert changelog_data['version'] == changelog_set['version']
-        assert changelog_data['date'] == changelog_set['date']
-        assert changelog_data['url'] == changelog_set['url']
-        assert changelog_data['changes'] == changelog_set['changes']
-
-
-def test_main(changelog_set, github_output_file, github_step_summary_file, github_token, input_dotnet):
+def test_main(github_output_file, github_step_summary_file, github_token, input_dotnet):
     job_outputs = main.main()
 
     with open(github_output_file, 'r') as f:

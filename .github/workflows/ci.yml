@@ -57,14 +57,6 @@ jobs:
 
 
   action:
-    strategy:
-      fail-fast: false
-      matrix:
-        set:
-          - '0'
-          - '1'
-          - '2'
-
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -74,68 +66,17 @@ jobs:
         id: action
         uses: ./
         with:
-          changelog_path: ./tests/data/set${{ matrix.set }}/CHANGELOG.md
           fail_on_events_api_error: false  # these scenarios do not exist in the GitHub events api
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print action outputs
         shell: bash
         run: |
-          echo "changelog_exists: ${{ steps.action.outputs.changelog_exists }}"
-          echo "changelog_changes: ${{ steps.action.outputs.changelog_changes }}"
-          echo "changelog_date: ${{ steps.action.outputs.changelog_date }}"
-          echo "changelog_url: ${{ steps.action.outputs.changelog_url }}"
-          echo "changelog_version: ${{ steps.action.outputs.changelog_version }}"
-          echo "changelog_release_exists: ${{ steps.action.outputs.changelog_release_exists }}"
-          echo "publish_stable_release: ${{ steps.action.outputs.publish_stable_release }}"
-          echo "release_version: ${{ steps.action.outputs.release_version }}"
+          echo "publish_release: ${{ steps.action.outputs.publish_release }}"
+          echo "release_commit: ${{ steps.action.outputs.release_commit }}"
+          echo "release_generate_release_notes: ${{ steps.action.outputs.release_generate_release_notes }}"
           echo "release_tag: ${{ steps.action.outputs.release_tag }}"
-
-      - name: Verify changelog_exists
-        shell: bash
-        run: |
-          if [[ "${{ steps.action.outputs.changelog_exists }}" != "True" ]]; then
-            if [[ "${{ matrix.set }}" != "0" ]]; then
-              echo "changelog_exists is not true"
-              exit 1
-            fi
-          fi
-
-      - name: Verify changelog_changes
-        shell: bash
-        run: |
-          expected_changes=$(cat ./tests/data/set${{ matrix.set }}/changes.txt)
-          if [[ "${{ steps.action.outputs.changelog_changes }}" != "${expected_changes}" ]]; then
-            echo "changelog_changes does not match expected"
-            exit 1
-          fi
-
-      - name: Verify changelog_date
-        shell: bash
-        run: |
-          expected_date=$(cat ./tests/data/set${{ matrix.set }}/date.txt)
-          if [[ "${{ steps.action.outputs.changelog_date }}" != "${expected_date}" ]]; then
-              echo "changelog_date does not match expected"
-              exit 1
-          fi
-
-      - name: Verify changelog_url
-        shell: bash
-        run: |
-          expected_url=$(cat ./tests/data/set${{ matrix.set }}/url.txt)
-          if [[ "${{ steps.action.outputs.changelog_url }}" != "${expected_url}" ]]; then
-              echo "changelog_url does not match expected"
-              exit 1
-          fi
-
-      - name: Verify changelog_version
-        shell: bash
-        run: |
-          expected_version=$(cat ./tests/data/set${{ matrix.set }}/version.txt)
-          if [[ "${{ steps.action.outputs.changelog_version }}" != "${expected_version}" ]]; then
-              echo "changelog_version does not match expected"
-              exit 1
-          fi
+          echo "release_version: ${{ steps.action.outputs.release_version }}"
 
   release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
@@ -159,10 +100,9 @@ jobs:
         with:
           allowUpdates: false
           artifacts: ''
-          body: ''
           discussionCategory: announcements
           generateReleaseNotes: true
           name: ${{ steps.setup-release.outputs.release_tag }}
-          prerelease: ${{ steps.setup-release.outputs.publish_stable_release != 'true' }}
+          prerelease: true
           tag: ${{ steps.setup-release.outputs.release_tag }}
           token: ${{ secrets.GH_BOT_TOKEN }}

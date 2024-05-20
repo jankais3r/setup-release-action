@@ -55,29 +55,6 @@ def set_github_action_output(output_name: str, output_value: str):
         f.write('\nEOF\n')
 
 
-def check_if_changelog_exists(changelog_path: str) -> bool:
-    """
-    Check if the changelog exists.
-
-    This function will first check if the changelog exists at the given path.
-
-    Parameters
-    ----------
-    changelog_path : str
-        Full path to the changelog file.
-
-    Returns
-    -------
-    bool
-        True if the changelog exists, False otherwise.
-    """
-    # Check if the changelog exists
-    if os.path.exists(changelog_path):
-        return True
-    else:
-        return False
-
-
 def check_release(version: str) -> bool:
     """
     Check if the release exists in the GitHub API.
@@ -177,7 +154,7 @@ def get_push_event_details() -> dict:
     if not is_pull_request:  # this is a push event
         attempt = 0
         push_event = None
-        while push_event is None and attempt < int(os.getenv('INPUT_EVENT_API_MAX_ATTEMPTS', 5)):
+        while push_event is None and attempt < int(os.getenv('INPUT_EVENT_API_MAX_ATTEMPTS', 30)):
             time.sleep(10)
             response = requests.get(github_api_url, headers=GITHUB_HEADERS, params=params)
 
@@ -229,89 +206,6 @@ def get_push_event_details() -> dict:
     return push_event_details
 
 
-def parse_changelog(changelog_path: str) -> dict:
-    """
-    Parse the changelog file.
-
-    This function will parse the changelog and return a dictionary.
-
-    Parameters
-    ----------
-    changelog_path : str
-        Full path to the changelog file.
-
-    Returns
-    -------
-    dict
-        Dictionary containing the following keys:
-
-        - version
-        - date
-        - changes
-        - url
-    """
-    with open(changelog_path, 'r') as file:
-        changelog_content = file.read()
-
-    # Define regular expressions to match version headers and their content
-    version_pattern = r'\[(\d+\.\d+\.\d+)\] - (\d{4}-\d{2}-\d{2})'
-    url_pattern = r'\[(\d+\.\d+\.\d+)\]:\s+(https:\/\/\S+)'
-
-    # Find all version headers and their content
-    versions = re.findall(version_pattern, changelog_content)
-    urls = re.findall(url_pattern, changelog_content)
-
-    # Determine the newest version based on the version numbers
-    newest_version = max(versions, key=lambda x: tuple(map(int, x[0].split('.'))))
-
-    # Find the URL associated with the newest version
-    newest_version_url = None
-    for version, url in urls:
-        if version == newest_version[0]:
-            newest_version_url = url
-            break
-
-    # Extract the changes for the newest version
-    newest_version_changes = ""
-    in_newest_version_section = False
-    for version, date in versions:
-        if version == newest_version[0]:
-            in_newest_version_section = True
-        elif in_newest_version_section and version != newest_version[0]:
-            break
-        if in_newest_version_section:
-            version_start = changelog_content.find(f'[{version}] - {date}')
-            next_version = versions.index((version, date)) + 1
-            if next_version < len(versions):
-                version_end = changelog_content.find(
-                    f'\n## [{versions[next_version][0]}] - {versions[next_version][1]}', version_start)
-            else:
-                version_end = len(changelog_content)
-
-            # Extract changes while excluding the start of the next version
-            if version_end != -1:
-                newest_version_changes = changelog_content[version_start:version_end]
-            else:
-                newest_version_changes = changelog_content[version_start:]
-
-    # Remove the version header line from the changes
-    newest_version_changes = newest_version_changes.replace(f'[{newest_version[0]}] - {newest_version[1]}\n', '')
-
-    # Remove the URL line from the changes
-    if newest_version_url:
-        newest_version_changes = newest_version_changes.replace(f'[{newest_version[0]}]: {newest_version_url}\n', '')
-
-    # Create a dictionary with the extracted information
-    changelog_data = {
-        'version': newest_version[0],
-        'date': newest_version[1],
-        'url': newest_version_url,
-        'changes': newest_version_changes.strip()
-    }
-
-    return changelog_data
-
-
 def main() -> dict:
     """
     Main function for the action.
@@ -323,63 +217,18 @@ def main() -> dict:
     """
     job_outputs = dict()
 
-    # Get the inputs from the Environment File
-    changelog_path = os.path.join(os.environ['GITHUB_WORKSPACE'], os.environ["INPUT_CHANGELOG_PATH"])
-
     # Get the push event details
     push_event_details = get_push_event_details()
 
-    # Check if the changelog exists
-    changelog_exists = check_if_changelog_exists(changelog_path=changelog_path)
-    job_outputs["changelog_exists"] = str(changelog_exists)
-
-    changelog_data = None
-    release_exists = False
-    # Parse the changelog
-    if changelog_exists:
-        changelog_data = parse_changelog(changelog_path=changelog_path)
-        job_outputs['changelog_changes'] = changelog_data["changes"]
-        job_outputs['changelog_date'] = changelog_data["date"]
-        job_outputs['changelog_url'] = changelog_data["url"]
-        job_outputs['changelog_version'] = changelog_data["version"]
-
-        # Check if the release exists
-        release_exists = check_release(version=changelog_data["version"])
-    else:
-        job_outputs['changelog_changes'] = ''
-        job_outputs['changelog_date'] = ''
-        job_outputs['changelog_url'] = ''
-        job_outputs['changelog_version'] = ''
-
-    job_outputs['changelog_release_exists'] = str(release_exists)
-    job_outputs['publish_pre_release'] = str(release_exists).lower()
-    job_outputs['publish_stable_release'] = str(not release_exists).lower()
-
-    if release_exists:
-        # the changelog release exists in GitHub
-        append_github_step_summary(
-            message=":warning: WARNING: The release in the changelog already exists. Defaulting to a pre-release.")
-
-    if release_exists or not changelog_exists:
-        # the changelog release exists, so we want to publish a pre-release
-        # or the changelog does not exist, so we want to publish a stable rolling release
-        release_body = ''
-        release_generate_release_notes = True
-        release_version = push_event_details["release_version"]
-        release_tag = f"{release_version}"
-    else:
-        # the changelog release does not exist, so we want to publish a stable release
-        release_body = changelog_data["changes"]
-        release_generate_release_notes = False
-        release_version = changelog_data["version"] if changelog_data else ''
-        release_tag = f"{release_version}"
+    release_generate_release_notes = True
+    release_version = push_event_details["release_version"]
+    release_tag = f"{release_version}"
 
     version_prefix = ''
     if os.getenv('INPUT_INCLUDE_TAG_PREFIX_IN_OUTPUT', 'true').lower() == 'true':
         version_prefix = os.getenv('INPUT_TAG_PREFIX', 'v')
 
     job_outputs['publish_release'] = str(push_event_details['publish_release']).lower()
-    job_outputs['release_body'] = release_body
     job_outputs['release_commit'] = push_event_details['release_commit']
     job_outputs['release_generate_release_notes'] = str(release_generate_release_notes).lower()
     job_outputs['release_version'] = release_version
