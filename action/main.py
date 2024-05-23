@@ -133,6 +133,8 @@ def get_push_event_details() -> dict:
     )
 
     github_api_url = f'https://api.github.com/repos/{REPOSITORY_NAME}/events'
+    # this endpoint can be delayed between 30 seconds and 6 hours...
+    # https://docs.github.com/en/rest/activity/events?apiVersion=2022-11-28#list-repository-events
 
     # query parameters
     params = {

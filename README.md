@@ -44,6 +44,5 @@ The action does the following:
 |--------------------------------|--------------------------------------------------------------------|
 | publish_release                | Whether or not to publish a release                                |
 | release_commit                 | The commit hash for the release                                    |
-| release_generate_release_notes | Whether to generate release notes for the release. (Always `true`) |
 | release_tag                    | The tag for the release (i.e. `release_version` with prefix)       |
 | release_version                | The version for the release (i.e. `yyyy.mmdd.hhmmss`)              |
