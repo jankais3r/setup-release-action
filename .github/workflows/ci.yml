@@ -73,6 +73,7 @@ jobs:
         shell: bash
         run: |
           echo "publish_release: ${{ steps.action.outputs.publish_release }}"
+          echo "release_body: ${{ steps.action.outputs.release_body }}"
           echo "release_commit: ${{ steps.action.outputs.release_commit }}"
           echo "release_generate_release_notes: ${{ steps.action.outputs.release_generate_release_notes }}"
           echo "release_tag: ${{ steps.action.outputs.release_tag }}"
@@ -96,7 +97,7 @@ jobs:
 
       - name: Create Release
         id: action
-        uses: LizardByte/create-release-action@master  # keep this on master, to prevent endless depandabot PRs
+        uses: LizardByte/create-release-action@master  # keep this on master, to prevent endless dependabot PRs
         with:
           allowUpdates: false
           artifacts: ''

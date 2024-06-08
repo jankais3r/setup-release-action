@@ -31,6 +31,8 @@ inputs:
 outputs:
   publish_release:
     description: "Whether to publish a release."
+  release_body:
+    description: "The body for the release."
   release_commit:
     description: "The commit hash for the release."
   release_generate_release_notes:
