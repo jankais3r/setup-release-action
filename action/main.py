@@ -266,22 +266,22 @@ def main() -> dict:
 
     # generate release notes
     if push_event_details['publish_release']:
-        release_notes = generate_release_body(
+        release_body = generate_release_body(
             tag_name=release_tag,
             target_commitish=push_event_details["release_commit"],
         )
     else:
-        release_notes = ''
-    release_generate_release_notes = True if not release_notes else False
+        release_body = ''
+    release_generate_release_notes = True if not release_body else False
 
     version_prefix = ''
     if os.getenv('INPUT_INCLUDE_TAG_PREFIX_IN_OUTPUT', 'true').lower() == 'true':
         version_prefix = os.getenv('INPUT_TAG_PREFIX', 'v')
 
     job_outputs['publish_release'] = str(push_event_details['publish_release']).lower()
+    job_outputs['release_body'] = release_body
     job_outputs['release_commit'] = push_event_details['release_commit']
     job_outputs['release_generate_release_notes'] = str(release_generate_release_notes).lower()
-    job_outputs['release_notes'] = release_notes
     job_outputs['release_version'] = release_version
     job_outputs['release_tag'] = f'{version_prefix if release_tag else ""}{release_tag}'
 
