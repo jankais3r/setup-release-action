@@ -208,6 +208,45 @@ def get_push_event_details() -> dict:
     return push_event_details
 
 
+def generate_release_body(tag_name: str, target_commitish: str) -> str:
+    """
+    Generate the release body, by comparing this SHA to the previous latest release.
+
+    Parameters
+    ----------
+    tag_name : str
+        Tag name of the release.
+    target_commitish : str
+        The commitish value that determines where the Git tag is created from.
+
+    Returns
+    -------
+    str
+        Release body.
+    """
+    # Get the latest release from the GitHub API
+    github_api_url = f'https://api.github.com/repos/{REPOSITORY_NAME}/releases/latest'
+    response = requests.get(github_api_url, headers=GITHUB_HEADERS)
+
+    # Check if the release exists
+    if not response.status_code == 200:
+        return ''
+
+    latest_release = response.json()
+
+    # generate release notes
+    github_api_url = f'https://api.github.com/repos/{REPOSITORY_NAME}/releases/generate-notes'
+    data = {
+        'tag_name': tag_name,
+        'target_commitish': target_commitish,
+        'previous_tag_name': latest_release['tag_name'],
+    }
+    response = requests.post(github_api_url, headers=GITHUB_HEADERS, json=data)
+
+    release_notes = response.json()
+    return release_notes['body']
+
+
 def main() -> dict:
     """
     Main function for the action.
@@ -222,9 +261,18 @@ def main() -> dict:
     # Get the push event details
     push_event_details = get_push_event_details()
 
-    release_generate_release_notes = True
     release_version = push_event_details["release_version"]
     release_tag = f"{release_version}"
+
+    # generate release notes
+    if push_event_details['publish_release']:
+        release_notes = generate_release_body(
+            tag_name=release_tag,
+            target_commitish=push_event_details["release_commit"],
+        )
+    else:
+        release_notes = ''
+    release_generate_release_notes = True if not release_notes else False
 
     version_prefix = ''
     if os.getenv('INPUT_INCLUDE_TAG_PREFIX_IN_OUTPUT', 'true').lower() == 'true':
@@ -233,6 +281,7 @@ def main() -> dict:
     job_outputs['publish_release'] = str(push_event_details['publish_release']).lower()
     job_outputs['release_commit'] = push_event_details['release_commit']
     job_outputs['release_generate_release_notes'] = str(release_generate_release_notes).lower()
+    job_outputs['release_notes'] = release_notes
     job_outputs['release_version'] = release_version
     job_outputs['release_tag'] = f'{version_prefix if release_tag else ""}{release_tag}'
 
@@ -246,4 +295,4 @@ def main() -> dict:
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pragma: no cover

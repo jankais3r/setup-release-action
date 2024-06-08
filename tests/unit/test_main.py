@@ -1,3 +1,6 @@
+# standard imports
+import os
+
 # lib imports
 import pytest
 
@@ -33,6 +36,7 @@ def test_set_github_action_output(github_output_file, outputs):
 
 @pytest.mark.parametrize('version', [
     ('1970.1.1', False),
+    ('2023.1127.235828', True),
 ])
 def test_check_release(version):
     assert main.check_release(version=version[0]) == version[1]
@@ -57,7 +61,23 @@ def test_get_push_event_details_fail_on_error(dummy_github_event_path, dummy_com
         main.get_push_event_details()
 
 
-def test_main(github_output_file, github_step_summary_file, github_token, input_dotnet):
+def test_generate_release_body(github_token):
+    assert main.generate_release_body(tag_name='test', target_commitish=os.environ['GITHUB_SHA'])
+
+
+def test_generate_release_body_non_200_status_code(github_token, requests_get_error):
+    assert main.generate_release_body(tag_name='test', target_commitish='abc') == ''
+
+
+@pytest.mark.parametrize('should_mock', [True, False])
+def test_main(
+        github_output_file,
+        github_step_summary_file,
+        github_token,
+        input_dotnet,
+        should_mock,
+        mock_get_push_event_details,
+):
     job_outputs = main.main()
 
     with open(github_output_file, 'r') as f:

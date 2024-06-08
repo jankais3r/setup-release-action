@@ -1,5 +1,6 @@
 # standard imports
 import os
+from unittest.mock import patch, Mock
 
 # lib imports
 from dotenv import load_dotenv
@@ -103,7 +104,14 @@ def github_event_path(request):
     # true is original file from GitHub context
     # false is dummy file
 
-    original_value = os.environ['GITHUB_EVENT_PATH']
+    original_value = os.getenv(
+        'GITHUB_EVENT_PATH',
+        os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            'dummy_github_event.json'
+        )
+    )
+
     if request.param:
         yield
     else:
@@ -112,7 +120,8 @@ def github_event_path(request):
             'dummy_github_event.json'
         )
         yield
-        os.environ['GITHUB_EVENT_PATH'] = original_value
+
+    os.environ['GITHUB_EVENT_PATH'] = original_value
 
 
 @pytest.fixture(scope='function')
@@ -139,3 +148,32 @@ def input_dotnet(request):
     yield
 
     del os.environ['INPUT_DOTNET']
+
+
+@pytest.fixture(scope='function')
+def requests_get_error():
+    original_get = requests.get
+
+    mock_response = Mock()
+    mock_response.status_code = 500
+    requests.get = Mock(return_value=mock_response)
+
+    yield
+
+    requests.get = original_get
+
+
+@pytest.fixture(params=[True, False])
+def mock_get_push_event_details(request):
+    if request.param:
+        # If the parameter is True, return a mock
+        with patch('action.main.get_push_event_details') as mock:
+            mock.return_value = {
+                'publish_release': True,
+                'release_commit': 'master',
+                'release_version': 'test',
+            }
+            yield
+    else:
+        # If the parameter is False, don't patch anything
+        yield
