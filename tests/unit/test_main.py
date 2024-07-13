@@ -61,6 +61,11 @@ def test_get_push_event_details_fail_on_error(dummy_github_event_path, dummy_com
         main.get_push_event_details()
 
 
+def test_process_release_body(gh_provided_release_notes_sample, expected_release_notes_sample):
+    result = main.process_release_body(release_body=gh_provided_release_notes_sample)
+    assert result == expected_release_notes_sample
+
+
 def test_generate_release_body(github_token):
     assert main.generate_release_body(tag_name='test', target_commitish=os.environ['GITHUB_SHA'])
 

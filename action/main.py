@@ -1,4 +1,5 @@
 # standard imports
+import io
 import json
 import os
 import re
@@ -208,6 +209,62 @@ def get_push_event_details() -> dict:
     return push_event_details
 
 
+def process_release_body(release_body: str) -> str:
+    """
+    Process the provided release body.
+
+    Replace contributor mentions and PR numbers with GitHub URLs.
+
+    Parameters
+    ----------
+    release_body : str
+       The release body.
+
+    Returns
+    -------
+    str
+       Processed release body.
+    """
+    # replace contributor mentions with GitHub profile
+    processed_body = ''
+    re_username = re.compile(r'@([a-zA-Z\d\-]{0,38})')
+    re_pr_url = re.compile(r'(https://github\.com/([a-zA-Z\d\-]{0,38})/([a-zA-Z\d-]+)/pull/(\d+))')
+    for line in io.StringIO(release_body).readlines():
+        # find the username
+        username_search = re_username.search(line)
+        if not username_search:
+            processed_body += line
+            continue
+
+        username = username_search.group(1)
+
+        update_pr_url = False
+        username_url = f'[@{username}](https://github.com/{username})'
+        if ' by @' in line:
+            # replace the mention with a GitHub profile URL
+            line = line.replace(f' by @{username}', f' by {username_url}')
+            update_pr_url = True
+        if '* @' in line:
+            # replace the mention with a GitHub profile URL
+            line = line.replace(f'* @{username}', f'* {username_url}')
+            update_pr_url = True
+        if update_pr_url:
+            pr_search = re_pr_url.search(line)
+            if not pr_search:
+                processed_body += line
+                continue
+
+            pr_url = pr_search.group(1)
+            pr_number = pr_search.group(4)
+
+            # replace the pr url with a Markdown link
+            line = line.replace(pr_url, f'[#{pr_number}]({pr_url})')
+
+        processed_body += line
+
+    return processed_body
+
+
 def generate_release_body(tag_name: str, target_commitish: str) -> str:
     """
     Generate the release body, by comparing this SHA to the previous latest release.
@@ -244,7 +301,7 @@ def generate_release_body(tag_name: str, target_commitish: str) -> str:
     response = requests.post(github_api_url, headers=GITHUB_HEADERS, json=data)
 
     release_notes = response.json()
-    return release_notes['body']
+    return process_release_body(release_body=release_notes['body'])
 
 
 def main() -> dict:

@@ -26,6 +26,7 @@ GITHUB_HEADERS = {'Authorization': f'token {GITHUB_TOKEN}'}
 
 # globals
 COMMIT = None
+DATA_DIRECTORY = os.path.join(os.path.dirname(__file__), 'data')
 
 
 def pytest_runtest_setup(item):
@@ -177,3 +178,15 @@ def mock_get_push_event_details(request):
     else:
         # If the parameter is False, don't patch anything
         yield
+
+
+@pytest.fixture(scope='module')
+def gh_provided_release_notes_sample():
+    with open(os.path.join(DATA_DIRECTORY, 'gh_provided_release_notes_sample.md'), 'r') as f:
+        yield f.read()
+
+
+@pytest.fixture(scope='module')
+def expected_release_notes_sample():
+    with open(os.path.join(DATA_DIRECTORY, 'expected_release_notes_sample.md'), 'r') as f:
+        yield f.read()
