@@ -7,14 +7,15 @@ from dotenv import load_dotenv
 import pytest
 import requests
 
+# local imports
+from action import main
+
 # set environment variables
 load_dotenv()
 os.environ['GITHUB_REPOSITORY'] = 'LizardByte/setup-release-action'
 os.environ['GITHUB_OUTPUT'] = 'github_output.md'
 os.environ['GITHUB_STEP_SUMMARY'] = 'github_step_summary.md'
 os.environ['GITHUB_WORKSPACE'] = os.path.join(os.getcwd(), 'github', 'workspace')
-os.environ['INPUT_EVENT_API_MAX_ATTEMPTS'] = '1'
-os.environ['INPUT_FAIL_ON_EVENTS_API_ERROR'] = 'false'
 
 try:
     GITHUB_TOKEN = os.environ['INPUT_GITHUB_TOKEN']
@@ -92,55 +93,44 @@ def latest_commit(github_token):
 
 
 @pytest.fixture(scope='function')
-def dummy_commit():
-    original_sha = os.environ.get('GITHUB_SHA', '')
-    os.environ['GITHUB_SHA'] = 'not-a-real-commit'
+def dummy_github_pr_event_path():
+    original_value = os.getenv('GITHUB_EVENT_PATH', os.path.join(DATA_DIRECTORY, 'dummy_github_event.json'))
+    os.environ['GITHUB_EVENT_PATH'] = os.path.join(DATA_DIRECTORY, 'dummy_github_pr_event.json')
     yield
+    os.environ['GITHUB_EVENT_PATH'] = original_value
 
-    os.environ['GITHUB_SHA'] = original_sha
+
+@pytest.fixture(scope='function')
+def dummy_github_push_event_path():
+    original_value = os.getenv('GITHUB_EVENT_PATH', os.path.join(DATA_DIRECTORY, 'dummy_github_event.json'))
+    os.environ['GITHUB_EVENT_PATH'] = os.path.join(DATA_DIRECTORY, 'dummy_github_push_event.json')
+    yield
+    os.environ['GITHUB_EVENT_PATH'] = original_value
+
+
+@pytest.fixture(scope='function')
+def dummy_github_push_event_path_invalid_commits():
+    original_value = os.getenv('GITHUB_EVENT_PATH', os.path.join(DATA_DIRECTORY, 'dummy_github_event.json'))
+    os.environ['GITHUB_EVENT_PATH'] = os.path.join(DATA_DIRECTORY, 'dummy_github_push_event_invalid_commits.json')
+    yield
+    os.environ['GITHUB_EVENT_PATH'] = original_value
 
 
 @pytest.fixture(scope='function', params=[True, False])
-def github_event_path(request):
-    # true is original file from GitHub context
-    # false is dummy file
+def github_event_path(request, dummy_github_pr_event_path, dummy_github_push_event_path):
+    # true is PR event
+    # false is push event
 
-    original_value = os.getenv(
-        'GITHUB_EVENT_PATH',
-        os.path.join(
-            os.path.dirname(os.path.dirname(__file__)),
-            'dummy_github_event.json'
-        )
-    )
+    original_value = os.getenv('GITHUB_EVENT_PATH', os.path.join(DATA_DIRECTORY, 'dummy_github_event.json'))
 
     if request.param:
+        os.environ['GITHUB_EVENT_PATH'] = os.path.join(DATA_DIRECTORY, 'dummy_github_pr_event.json')
         yield
     else:
-        os.environ['GITHUB_EVENT_PATH'] = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)),
-            'dummy_github_event.json'
-        )
+        os.environ['GITHUB_EVENT_PATH'] = os.path.join(DATA_DIRECTORY, 'dummy_github_push_event.json')
         yield
 
     os.environ['GITHUB_EVENT_PATH'] = original_value
-
-
-@pytest.fixture(scope='function')
-def dummy_github_event_path():
-    original_value = os.environ['GITHUB_EVENT_PATH']
-    os.environ['GITHUB_EVENT_PATH'] = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        'dummy_github_event.json'
-    )
-    yield
-    os.environ['GITHUB_EVENT_PATH'] = original_value
-
-
-@pytest.fixture(scope='function')
-def fail_on_events_api_error():
-    os.environ['INPUT_FAIL_ON_EVENTS_API_ERROR'] = 'true'
-    yield
-    os.environ['INPUT_FAIL_ON_EVENTS_API_ERROR'] = 'false'
 
 
 @pytest.fixture(params=[True, False], scope='function')
@@ -164,7 +154,7 @@ def requests_get_error():
     requests.get = original_get
 
 
-@pytest.fixture(params=[True, False])
+@pytest.fixture(scope='function', params=[True, False])
 def mock_get_push_event_details(request):
     if request.param:
         # If the parameter is True, return a mock
@@ -180,13 +170,54 @@ def mock_get_push_event_details(request):
         yield
 
 
-@pytest.fixture(scope='module')
-def gh_provided_release_notes_sample():
-    with open(os.path.join(DATA_DIRECTORY, 'gh_provided_release_notes_sample.md'), 'r') as f:
-        yield f.read()
+@pytest.fixture(scope='function', params=[True, False])
+def mock_get_repo_squash_and_merge_required(request):
+    original_get = requests.get
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        'allow_squash_merge': True,
+        'allow_merge_commit': not request.param,
+        'allow_rebase_merge': not request.param,
+    }
+
+    requests.get = Mock(return_value=mock_response)
+
+    yield request.param
+
+    requests.get = original_get
 
 
-@pytest.fixture(scope='module')
-def expected_release_notes_sample():
-    with open(os.path.join(DATA_DIRECTORY, 'expected_release_notes_sample.md'), 'r') as f:
-        yield f.read()
+@pytest.fixture(scope='function')
+def mock_get_repo_squash_and_merge_required_key_error():
+    original_get = requests.get
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {}
+
+    requests.get = Mock(return_value=mock_response)
+
+    yield
+
+    requests.get = original_get
+
+
+@pytest.fixture(scope='function')
+def mock_get_squash_and_merge_return_value():
+    original_function = main.get_repo_squash_and_merge_required
+    main.get_repo_squash_and_merge_required = Mock(return_value=False)
+    yield
+    main.get_repo_squash_and_merge_required = original_function
+
+
+@pytest.fixture(scope='module', params=[0, 1])
+def release_notes_sample(request):
+    sample_set = ()
+    with open(os.path.join(DATA_DIRECTORY, f'provided_release_notes_sample_{request.param}.md'), 'r') as f:
+        sample_set += (f.read(),)
+    with open(os.path.join(DATA_DIRECTORY, f'expected_release_notes_sample_{request.param}.md'), 'r') as f:
+        sample_set += (f.read(),)
+
+    return sample_set

@@ -3,7 +3,6 @@ import io
 import json
 import os
 import re
-import time
 
 # lib imports
 from dotenv import load_dotenv
@@ -93,9 +92,7 @@ def get_github_event() -> dict:
     dict
         Dictionary containing the GitHub event.
     """
-    github_event_path = os.getenv(
-        'GITHUB_EVENT_PATH', os.path.join(ROOT_DIR, 'dummy_github_event.json')
-    )
+    github_event_path = os.environ['GITHUB_EVENT_PATH']
     with open(github_event_path, 'r') as f:
         github_event = json.load(f)
     return github_event
@@ -113,6 +110,44 @@ def get_repo_default_branch() -> str:
     # get default branch from event context
     github_event = get_github_event()
     return github_event['repository']['default_branch']
+
+
+def get_repo_squash_and_merge_required() -> bool:
+    """
+    Check if squash and merge is required for the repository.
+
+    Returns
+    -------
+    bool
+        True if squash and merge is required, False otherwise.
+
+    Raises
+    ------
+    KeyError
+        If the required keys are not found in the GitHub API response.
+        Ensure the token has the `"Metadata" repository permissions (read)` scope.
+    """
+    github_api_url = f'https://api.github.com/repos/{REPOSITORY_NAME}'
+    response = requests.get(url=github_api_url, headers=GITHUB_HEADERS)
+    repo_info = response.json()
+
+    try:
+        allow_squash_merge = repo_info['allow_squash_merge']
+        allow_merge_commit = repo_info['allow_merge_commit']
+        allow_rebase_merge = repo_info['allow_rebase_merge']
+    except KeyError:
+        msg = ('::error:: Could not find the required keys in the GitHub API response. '
+               'Ensure the token has the `"Metadata" repository permissions (read)` scope.')
+        print(msg)
+        raise KeyError(msg)
+
+    if allow_squash_merge and not allow_merge_commit and not allow_rebase_merge:
+        return True
+    else:
+        print('::error:: The repository must have ONLY squash and merge enabled.')
+        print('::warning:: DO NOT re-run this job after changing the repository settings.'
+              'Wait until a new commit is made.')
+        return False
 
 
 def get_push_event_details() -> dict:
@@ -133,15 +168,6 @@ def get_push_event_details() -> dict:
         release_version='',
     )
 
-    github_api_url = f'https://api.github.com/repos/{REPOSITORY_NAME}/events'
-    # this endpoint can be delayed between 30 seconds and 6 hours...
-    # https://docs.github.com/en/rest/activity/events?apiVersion=2022-11-28#list-repository-events
-
-    # query parameters
-    params = {
-        "per_page": 100
-    }
-
     github_event = get_github_event()
 
     is_pull_request = True if github_event.get("pull_request") else False
@@ -154,38 +180,37 @@ def get_push_event_details() -> dict:
         github_sha = os.environ["GITHUB_SHA"]
     push_event_details['release_commit'] = github_sha
 
-    if not is_pull_request:  # this is a push event
-        attempt = 0
-        push_event = None
-        while push_event is None and attempt < int(os.getenv('INPUT_EVENT_API_MAX_ATTEMPTS', 30)):
-            time.sleep(10)
-            response = requests.get(github_api_url, headers=GITHUB_HEADERS, params=params)
-
-            for event in response.json():
-                if event["type"] == "PushEvent" and event["payload"]["head"] == github_sha:
-                    push_event = event
-                if event["type"] == "PushEvent" and \
-                        event["payload"]["ref"] == f"refs/heads/{get_repo_default_branch()}":
-                    break
-
-            attempt += 1
-
-        if push_event is None:
-            msg = f":exclamation: ERROR: Push event not found in the GitHub API after {attempt} attempts."
-            append_github_step_summary(message=msg)
-            if os.getenv('INPUT_FAIL_ON_EVENTS_API_ERROR', 'false').lower() == 'true':
-                raise SystemExit(msg)
-            else:
-                return push_event_details
-    else:  # this is a pull request
+    if is_pull_request:
         return push_event_details
 
-    # not a pull request
+    # this is a push event
+    # check if squash and merge is required
+    if not get_repo_squash_and_merge_required():
+        msg = (":exclamation: ERROR: Squash and merge is not enabled for this repository. "
+               "Please ensure ONLY squash and merge is enabled. "
+               "**DO NOT** re-run this job after changing the repository settings. Wait until a new commit is made.")
+        append_github_step_summary(message=msg)
+        print(f'::error:: {msg}')
+        raise SystemExit(2)
+
+    # ensure there is only 1 commit in the github context
+    if len(github_event["commits"]) != 1:
+        msg = (":exclamation: ERROR: This action only supports a single commit push event. "
+               "Please ensure ONLY squash and merge is enabled. "
+               "**DO NOT** re-run this job after changing the repository settings. Wait until a new commit is made.")
+        append_github_step_summary(message=msg)
+        print(f'::error:: {msg}')
+        raise SystemExit(3)
+
+    # get the commit
+    commit = github_event["commits"][0]
+
+    # not a pull request, so publish
     push_event_details['publish_release'] = True
 
     # use regex and convert created at to yyyy.m.d-hhmmss
-    # created_at: "2023-1-25T10:43:35Z"
-    match = re.search(r'(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{2}):(\d{2})Z', push_event["created_at"])
+    # timestamp: "2023-01-25T10:43:35Z"
+    match = re.search(r'(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{2}):(\d{2})Z', commit["timestamp"])
 
     release_version = ''
     if match:

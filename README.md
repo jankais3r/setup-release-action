@@ -19,22 +19,10 @@ The action does the following:
     github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-## Advanced Usage
-```yaml
-- name: Setup Release
-  id: setup_release
-  uses: LizardByte/setup-release-action@master
-  with:
-    fail_on_events_api_error: true
-    github_token: ${{ secrets.GITHUB_TOKEN }}
-```
-
 ## Inputs
 | Name                         | Description                                                                                | Default | Required |
 |------------------------------|--------------------------------------------------------------------------------------------|---------|----------|
 | dotnet                       | Whether to create a dotnet version (4 components, e.g. yyyy.mmdd.hhmm.ss).                 | `false` | `false`  |
-| event_api_max_attempts       | Maximum number of attempts for the GitHub Events API.                                      | `10`    | `false`  |
-| fail_on_events_api_error     | Whether to fail if the GitHub Events API returns an error. Will only fail for push events. | `true`  | `false`  |
 | github_token                 | GitHub token to use for API requests.                                                      |         | `true`   |
 | include_tag_prefix_in_output | Whether to include the tag prefix in the output.                                           | `true`  | `false`  |
 | tag_prefix                   | The tag prefix. This will be used when searching for existing releases in GitHub API.      | `v`     | `false`  |

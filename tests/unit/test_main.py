@@ -42,28 +42,40 @@ def test_check_release(version):
     assert main.check_release(version=version[0]) == version[1]
 
 
-def test_get_repo_default_branch(github_token):
+def test_get_repo_default_branch(github_token, github_event_path):
     assert main.get_repo_default_branch() == 'master'
+
+
+def test_get_repo_squash_and_merge_required(mock_get_repo_squash_and_merge_required):
+    assert main.get_repo_squash_and_merge_required() is mock_get_repo_squash_and_merge_required
+
+
+def test_get_repo_squash_and_merge_required_key_error(mock_get_repo_squash_and_merge_required_key_error):
+    with pytest.raises(KeyError):
+        main.get_repo_squash_and_merge_required()
 
 
 def test_get_push_event_details(github_event_path, input_dotnet, latest_commit):
     assert main.get_push_event_details()
 
 
-def test_get_push_event_details_no_event(dummy_github_event_path, dummy_commit):
-    result = main.get_push_event_details()
-    assert result['publish_release'] is False
-    assert result['release_version'] == ''
-
-
-def test_get_push_event_details_fail_on_error(dummy_github_event_path, dummy_commit, fail_on_events_api_error):
-    with pytest.raises(SystemExit):
+def test_get_push_event_details_no_squash(github_event_path, mock_get_squash_and_merge_return_value):
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
         main.get_push_event_details()
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == 2
 
 
-def test_process_release_body(gh_provided_release_notes_sample, expected_release_notes_sample):
-    result = main.process_release_body(release_body=gh_provided_release_notes_sample)
-    assert result == expected_release_notes_sample
+def test_get_push_event_details_invalid_commits(dummy_github_push_event_path_invalid_commits):
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        main.get_push_event_details()
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == 3
+
+
+def test_process_release_body(release_notes_sample):
+    result = main.process_release_body(release_body=release_notes_sample[0])
+    assert result == release_notes_sample[1]
 
 
 def test_generate_release_body(github_token):

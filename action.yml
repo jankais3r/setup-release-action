@@ -8,14 +8,6 @@ inputs:
     description: "Whether to create a dotnet version (4 components, e.g. yyyy.mmdd.hhmm.ss)."
     default: 'false'
     required: false
-  event_api_max_attempts:
-    description: "Maximum number of attempts for the GitHub Events API."
-    default: '30'
-    required: false
-  fail_on_events_api_error:
-    description: "Whether to fail if the GitHub Events API returns an error. Will only fail for push events."
-    default: 'true'
-    required: false
   github_token:
     description: "GitHub token to use for API requests."
     required: true
