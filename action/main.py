@@ -1,4 +1,5 @@
 # standard imports
+from datetime import datetime
 import io
 import json
 import os
@@ -209,16 +210,17 @@ def get_push_event_details() -> dict:
     commit_timestamp = github_event["commits"][0]['timestamp']
 
     # use regex and convert created at to yyyy.m.d-hhmmss
+    # GitHub can provide timestamps in different formats, ensure we handle them all using `fromisoformat`
     # timestamp: "2023-01-25T10:43:35Z"
-    match = re.search(r'(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{2}):(\d{2})Z', commit_timestamp)
+    # timestamp "2024-07-14T13:17:25-04:00"
+    timestamp = datetime.fromisoformat(commit_timestamp)
+    year = timestamp.year
+    month = str(timestamp.month).zfill(2)
+    day = str(timestamp.day).zfill(2)
+    hour = str(timestamp.hour).zfill(2)
+    minute = str(timestamp.minute).zfill(2)
+    second = str(timestamp.second).zfill(2)
 
-    # assume a match, and raise exception if not found
-    year = int(match.group(1))
-    month = match.group(2).zfill(2)
-    day = match.group(3).zfill(2)
-    hour = match.group(4).zfill(2)
-    minute = match.group(5).zfill(2)
-    second = match.group(6).zfill(2)
     if os.getenv('INPUT_DOTNET', 'false').lower() == 'true':
         # dotnet versioning
         build = f"{hour}{minute}"

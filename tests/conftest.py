@@ -116,20 +116,11 @@ def dummy_github_push_event_path_invalid_commits():
     os.environ['GITHUB_EVENT_PATH'] = original_value
 
 
-@pytest.fixture(scope='function', params=[True, False])
-def github_event_path(request, dummy_github_pr_event_path, dummy_github_push_event_path):
-    # true is PR event
-    # false is push event
-
+@pytest.fixture(scope='function', params=['pr', 'push', 'push_alt_timestamp'])
+def github_event_path(request):
     original_value = os.getenv('GITHUB_EVENT_PATH', os.path.join(DATA_DIRECTORY, 'dummy_github_event.json'))
-
-    if request.param:
-        os.environ['GITHUB_EVENT_PATH'] = os.path.join(DATA_DIRECTORY, 'dummy_github_pr_event.json')
-        yield
-    else:
-        os.environ['GITHUB_EVENT_PATH'] = os.path.join(DATA_DIRECTORY, 'dummy_github_push_event.json')
-        yield
-
+    os.environ['GITHUB_EVENT_PATH'] = os.path.join(DATA_DIRECTORY, f'dummy_github_{request.param}_event.json')
+    yield
     os.environ['GITHUB_EVENT_PATH'] = original_value
 
 
