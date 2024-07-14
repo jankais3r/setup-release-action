@@ -86,13 +86,12 @@ def test_generate_release_body_non_200_status_code(github_token, requests_get_er
     assert main.generate_release_body(tag_name='test', target_commitish='abc') == ''
 
 
-@pytest.mark.parametrize('should_mock', [True, False])
-def test_main(
+def test_main_function(
+        github_event_path,
         github_output_file,
         github_step_summary_file,
         github_token,
         input_dotnet,
-        should_mock,
         mock_get_push_event_details,
 ):
     job_outputs = main.main()

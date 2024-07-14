@@ -55,18 +55,28 @@ jobs:
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
 
-
   action:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Dump github context
+        env:
+          GH_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GH_CONTEXT"
+        shell: bash
+
+      - name: Debug
+        run: |
+          echo "GITHUB_EVENT_PATH: ${GITHUB_EVENT_PATH}"
+          echo "---------------------------------------"
+          cat $GITHUB_EVENT_PATH
+
       - name: Run Action
         id: action
         uses: ./
         with:
-          fail_on_events_api_error: false  # these scenarios do not exist in the GitHub events api
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print action outputs

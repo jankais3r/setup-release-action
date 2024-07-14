@@ -202,33 +202,32 @@ def get_push_event_details() -> dict:
         print(f'::error:: {msg}')
         raise SystemExit(3)
 
-    # get the commit
-    commit = github_event["commits"][0]
-
     # not a pull request, so publish
     push_event_details['publish_release'] = True
 
+    # get the commit
+    commit_timestamp = github_event["commits"][0]['timestamp']
+
     # use regex and convert created at to yyyy.m.d-hhmmss
     # timestamp: "2023-01-25T10:43:35Z"
-    match = re.search(r'(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{2}):(\d{2})Z', commit["timestamp"])
+    match = re.search(r'(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{2}):(\d{2})Z', commit_timestamp)
 
-    release_version = ''
-    if match:
-        year = int(match.group(1))
-        month = match.group(2).zfill(2)
-        day = match.group(3).zfill(2)
-        hour = match.group(4).zfill(2)
-        minute = match.group(5).zfill(2)
-        second = match.group(6).zfill(2)
-        if os.getenv('INPUT_DOTNET', 'false').lower() == 'true':
-            # dotnet versioning
-            build = f"{hour}{minute}"
-            revision = second
-            release_version = f"{year}.{int(month)}{day}.{int(build)}.{int(revision)}"
-        else:
-            # default versioning
-            build = f"{hour}{minute}{second}"
-            release_version = f"{year}.{int(month)}{day}.{int(build)}"
+    # assume a match, and raise exception if not found
+    year = int(match.group(1))
+    month = match.group(2).zfill(2)
+    day = match.group(3).zfill(2)
+    hour = match.group(4).zfill(2)
+    minute = match.group(5).zfill(2)
+    second = match.group(6).zfill(2)
+    if os.getenv('INPUT_DOTNET', 'false').lower() == 'true':
+        # dotnet versioning
+        build = f"{hour}{minute}"
+        revision = second
+        release_version = f"{year}.{int(month)}{day}.{int(build)}.{int(revision)}"
+    else:
+        # default versioning
+        build = f"{hour}{minute}{second}"
+        release_version = f"{year}.{int(month)}{day}.{int(build)}"
 
     push_event_details['release_version'] = release_version
     return push_event_details
