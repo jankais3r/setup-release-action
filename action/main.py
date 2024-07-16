@@ -256,8 +256,10 @@ def process_release_body(release_body: str) -> str:
     re_username = re.compile(r'@([a-zA-Z\d\-]{0,38})')
     re_pr_url = re.compile(r'(https://github\.com/([a-zA-Z\d\-]{0,38})/([a-zA-Z\d-]+)/pull/(\d+))')
     for line in io.StringIO(release_body).readlines():
+        split_line = line.rsplit(' by ', 1)
+
         # find the username
-        username_search = re_username.search(line)
+        username_search = re_username.search(split_line[1] if len(split_line) > 1 else line)
         if not username_search:
             processed_body += line
             continue
