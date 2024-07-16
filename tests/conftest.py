@@ -93,14 +93,6 @@ def latest_commit(github_token):
 
 
 @pytest.fixture(scope='function')
-def dummy_github_pr_event_path():
-    original_value = os.getenv('GITHUB_EVENT_PATH', os.path.join(DATA_DIRECTORY, 'dummy_github_event.json'))
-    os.environ['GITHUB_EVENT_PATH'] = os.path.join(DATA_DIRECTORY, 'dummy_github_pr_event.json')
-    yield
-    os.environ['GITHUB_EVENT_PATH'] = original_value
-
-
-@pytest.fixture(scope='function')
 def dummy_github_push_event_path():
     original_value = os.getenv('GITHUB_EVENT_PATH', os.path.join(DATA_DIRECTORY, 'dummy_github_event.json'))
     os.environ['GITHUB_EVENT_PATH'] = os.path.join(DATA_DIRECTORY, 'dummy_github_push_event.json')

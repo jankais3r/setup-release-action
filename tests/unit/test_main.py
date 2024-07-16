@@ -59,7 +59,7 @@ def test_get_push_event_details(github_event_path, input_dotnet, latest_commit):
     assert main.get_push_event_details()
 
 
-def test_get_push_event_details_no_squash(github_event_path, mock_get_squash_and_merge_return_value):
+def test_get_push_event_details_no_squash(dummy_github_push_event_path, mock_get_squash_and_merge_return_value):
     with pytest.raises(SystemExit) as pytest_wrapped_e:
         main.get_push_event_details()
     assert pytest_wrapped_e.type == SystemExit
