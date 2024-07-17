@@ -9,6 +9,9 @@ import re
 from dotenv import load_dotenv
 import requests
 
+# global variables
+AVATAR_SIZE = 40
+
 # Load the environment variables from the Environment File
 load_dotenv()
 
@@ -306,21 +309,20 @@ def process_release_body(release_body: str) -> str:
         # sort contributors by contributions count
         contributors = dict(sorted(contributors.items(), key=lambda item: (-item[1]['contributions'], item[0])))
 
-        processed_body += '\n---\n'
+        processed_body += '\n\n---\n'
         processed_body += '## Contributors\n'
         for contributor, details in contributors.items():
             # add the contributor's avatar
-            # use <img> tag to ensure the image is the correct size of 50x50
-            # unchanged avatars cannot use the size query
+            # use <img> tag to ensure the image is the correct size as unchanged avatars cannot use the size query
             processed_body += (
                 f'<a href="{details["url"]}" '
                 'target="_blank" '
                 'rel="external noopener noreferrer" '
                 f'aria-label="GitHub profile of contributor, {contributor}" '
                 '>'
-                f'<img src="{details["url"]}.png?size=50" '
-                'width="50" '
-                'height="50" '
+                f'<img src="{details["url"]}.png?size={AVATAR_SIZE}" '
+                f'width="{AVATAR_SIZE}" '
+                f'height="{AVATAR_SIZE}" '
                 f'alt="{contributor}" '
                 f'title="{contributor}: {details["contributions"]} '
                 f'{"merges" if details["contributions"] > 1 else "merge"}" '

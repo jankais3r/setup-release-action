@@ -5,6 +5,7 @@
 ## New Contributors
 * [@LizardByte](https://github.com/LizardByte) made their first contribution
 
+
 ---
 ## Contributors
-<a href="https://github.com/LizardByte" target="_blank" rel="external noopener noreferrer" aria-label="GitHub profile of contributor, LizardByte" ><img src="https://github.com/LizardByte.png?size=50" width="50" height="50" alt="LizardByte" title="LizardByte: 2 merges" ></a><a href="https://github.com/dependabot" target="_blank" rel="external noopener noreferrer" aria-label="GitHub profile of contributor, dependabot" ><img src="https://github.com/dependabot.png?size=50" width="50" height="50" alt="dependabot" title="dependabot: 1 merge" ></a>
+<a href="https://github.com/LizardByte" target="_blank" rel="external noopener noreferrer" aria-label="GitHub profile of contributor, LizardByte" ><img src="https://github.com/LizardByte.png?size=40" width="40" height="40" alt="LizardByte" title="LizardByte: 2 merges" ></a><a href="https://github.com/dependabot" target="_blank" rel="external noopener noreferrer" aria-label="GitHub profile of contributor, dependabot" ><img src="https://github.com/dependabot.png?size=40" width="40" height="40" alt="dependabot" title="dependabot: 1 merge" ></a>
