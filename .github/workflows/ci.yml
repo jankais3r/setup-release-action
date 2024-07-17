@@ -41,6 +41,7 @@ jobs:
             -rxXs \
             --tb=native \
             --verbose \
+            --color=yes \
             --cov=action \
             tests
 
