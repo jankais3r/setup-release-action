@@ -253,6 +253,7 @@ def process_release_body(release_body: str) -> str:
     """
     # replace contributor mentions with GitHub profile
     processed_body = ''
+    contributors = {}
     re_username = re.compile(r'@([a-zA-Z\d\-]{0,38})')
     re_pr_url = re.compile(r'(https://github\.com/([a-zA-Z\d\-]{0,38})/([a-zA-Z\d-]+)/pull/(\d+))')
     for line in io.StringIO(release_body).readlines():
@@ -267,14 +268,24 @@ def process_release_body(release_body: str) -> str:
         username = username_search.group(1)
 
         update_pr_url = False
-        username_url = f'[@{username}](https://github.com/{username})'
+        username_url = f'https://github.com/{username}'
+        username_url_md = f'[@{username}]({username_url})'
+
+        if username in contributors:
+            contributors[username]['contributions'] += 1
+        else:
+            contributors[username] = {
+                'contributions': 1,
+                'url': username_url,
+            }
+
         if ' by @' in line:
             # replace the mention with a GitHub profile URL
-            line = line.replace(f' by @{username}', f' by {username_url}')
+            line = line.replace(f' by @{username}', f' by {username_url_md}')
             update_pr_url = True
         if '* @' in line:
             # replace the mention with a GitHub profile URL
-            line = line.replace(f'* @{username}', f'* {username_url}')
+            line = line.replace(f'* @{username}', f'* {username_url_md}')
             update_pr_url = True
         if update_pr_url:
             pr_search = re_pr_url.search(line)
@@ -289,6 +300,32 @@ def process_release_body(release_body: str) -> str:
             line = line.replace(pr_url, f'[#{pr_number}]({pr_url})')
 
         processed_body += line
+
+    # add contributors to the release notes
+    if contributors:
+        # sort contributors by contributions count
+        contributors = dict(sorted(contributors.items(), key=lambda item: (-item[1]['contributions'], item[0])))
+
+        processed_body += '\n---\n'
+        processed_body += '## Contributors\n'
+        for contributor, details in contributors.items():
+            # add the contributor's avatar
+            # use <img> tag to ensure the image is the correct size of 50x50
+            # unchanged avatars cannot use the size query
+            processed_body += (
+                f'<a href="{details["url"]}" '
+                'target="_blank" '
+                'rel="external noopener noreferrer" '
+                f'aria-label="GitHub profile of contributor, {contributor}" '
+                '>'
+                f'<img src="{details["url"]}.png?size=50" '
+                'width="50" '
+                'height="50" '
+                f'alt="{contributor}" '
+                f'title="{contributor}: {details["contributions"]} '
+                f'{"merges" if details["contributions"] > 1 else "merge"}" '
+                '></a>')
+    processed_body += '\n'
 
     return processed_body
 
