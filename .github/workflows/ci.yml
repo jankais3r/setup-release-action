@@ -34,7 +34,7 @@ jobs:
       - name: Test with pytest
         id: test
         env:
-          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_GITHUB_TOKEN: ${{ github.actor == 'dependabot[bot]' && secrets.GH_BOT_TOKEN || secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           python -m pytest \
