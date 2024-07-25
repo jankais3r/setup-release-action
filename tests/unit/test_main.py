@@ -1,11 +1,96 @@
 # standard imports
 import os
+from typing import Dict, Tuple, Union
 
 # lib imports
 import pytest
 
 # local imports
 from action import main
+
+
+@pytest.mark.parametrize('iso_timestamp', [
+    ('1970-01-01T00:00:00Z', dict(
+        year=1970,
+        month='01',
+        day='01',
+        hour='00',
+        minute='00',
+        second='00',
+    )),
+    ('2023-11-27T23:58:28Z', dict(
+        year=2023,
+        month='11',
+        day='27',
+        hour='23',
+        minute='58',
+        second='28',
+    )),
+    ('2023-01-25T10:43:35Z', dict(
+        year=2023,
+        month='01',
+        day='25',
+        hour='10',
+        minute='43',
+        second='35',
+    )),
+    ('2024-07-14T17:17:25Z', dict(
+        year=2024,
+        month='07',
+        day='14',
+        hour='17',
+        minute='17',
+        second='25',
+    )),
+    ('2024-07-14T13:17:25-04:00', dict(
+        year=2024,
+        month='07',
+        day='14',
+        hour='17',  # include timezone offset
+        minute='17',
+        second='25',
+    )),
+    ('2024-07-14T13:17:25+04:00', dict(
+        year=2024,
+        month='07',
+        day='14',
+        hour='09',  # include timezone offset
+        minute='17',
+        second='25',
+    )),
+    ('2024-07-22T22:17:25-04:00', dict(
+        year=2024,
+        month='07',
+        day='23',
+        hour='02',  # include timezone offset
+        minute='17',
+        second='25',
+    )),
+])
+def test_timestamp_class(iso_timestamp: Tuple[str, Dict[str, Union[int, str]]]):
+    timestamp = main.TimestampUTC(iso_timestamp=iso_timestamp[0])
+
+    assert timestamp.year == iso_timestamp[1]['year']
+    assert timestamp.month == iso_timestamp[1]['month']
+    assert timestamp.day == iso_timestamp[1]['day']
+    assert timestamp.hour == iso_timestamp[1]['hour']
+    assert timestamp.minute == iso_timestamp[1]['minute']
+    assert timestamp.second == iso_timestamp[1]['second']
+
+    assert repr(timestamp) == ("TimestampUTC("
+                               f"y{iso_timestamp[1]['year']}."
+                               f"m{iso_timestamp[1]['month']}."
+                               f"d{iso_timestamp[1]['day']}."
+                               f"h{iso_timestamp[1]['hour']}."
+                               f"m{iso_timestamp[1]['minute']}."
+                               f"s{iso_timestamp[1]['second']})")
+
+    assert str(timestamp) == (f"self.year={iso_timestamp[1]['year']}, "
+                              f"self.month='{iso_timestamp[1]['month']}', "
+                              f"self.day='{iso_timestamp[1]['day']}', "
+                              f"self.hour='{iso_timestamp[1]['hour']}', "
+                              f"self.minute='{iso_timestamp[1]['minute']}', "
+                              f"self.second='{iso_timestamp[1]['second']}'")
 
 
 @pytest.mark.parametrize('message', [

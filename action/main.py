@@ -1,5 +1,5 @@
 # standard imports
-from datetime import datetime
+import datetime
 import io
 import json
 import os
@@ -26,6 +26,48 @@ GITHUB_API_TOKEN = os.environ["INPUT_GITHUB_TOKEN"]
 
 # Define the headers for the GitHub API
 GITHUB_HEADERS = {'Authorization': f'token {GITHUB_API_TOKEN}'}
+
+
+class TimestampUTC:
+    """
+    Timestamp class to handle the timestamp conversion.
+
+    Attributes
+    ----------
+    timestamp : datetime.datetime
+        The timestamp in datetime format.
+    year : int
+        The year of the timestamp.
+    month : str
+        The month of the timestamp, zero-padded.
+    day : str
+        The day of the timestamp, zero-padded.
+    hour : str
+        The hour of the timestamp, zero-padded.
+    minute : str
+        The minute of the timestamp, zero-padded.
+    second : str
+        The second of the timestamp, zero-padded.
+    """
+    def __init__(self, iso_timestamp: str):
+        # use datetime.datetime and convert created at to yyyy.m.d-hhmmss
+        # GitHub can provide timestamps in different formats, ensure we handle them all using `fromisoformat`
+        # timestamp: "2023-01-25T10:43:35Z"
+        # timestamp "2024-07-14T13:17:25-04:00"
+        self.timestamp = datetime.datetime.fromisoformat(iso_timestamp).astimezone(datetime.timezone.utc)
+        self.year = self.timestamp.year
+        self.month = str(self.timestamp.month).zfill(2)
+        self.day = str(self.timestamp.day).zfill(2)
+        self.hour = str(self.timestamp.hour).zfill(2)
+        self.minute = str(self.timestamp.minute).zfill(2)
+        self.second = str(self.timestamp.second).zfill(2)
+
+    def __repr__(self):
+        class_name = type(self).__name__
+        return f"{class_name}(y{self.year}.m{self.month}.d{self.day}.h{self.hour}.m{self.minute}.s{self.second})"
+
+    def __str__(self):
+        return f"{self.year=}, {self.month=}, {self.day=}, {self.hour=}, {self.minute=}, {self.second=}"
 
 
 def append_github_step_summary(message: str):
@@ -212,27 +254,17 @@ def get_push_event_details() -> dict:
     # get the commit
     commit_timestamp = github_event["commits"][0]['timestamp']
 
-    # use regex and convert created at to yyyy.m.d-hhmmss
-    # GitHub can provide timestamps in different formats, ensure we handle them all using `fromisoformat`
-    # timestamp: "2023-01-25T10:43:35Z"
-    # timestamp "2024-07-14T13:17:25-04:00"
-    timestamp = datetime.fromisoformat(commit_timestamp)
-    year = timestamp.year
-    month = str(timestamp.month).zfill(2)
-    day = str(timestamp.day).zfill(2)
-    hour = str(timestamp.hour).zfill(2)
-    minute = str(timestamp.minute).zfill(2)
-    second = str(timestamp.second).zfill(2)
+    ts = TimestampUTC(iso_timestamp=commit_timestamp)
 
     if os.getenv('INPUT_DOTNET', 'false').lower() == 'true':
         # dotnet versioning
-        build = f"{hour}{minute}"
-        revision = second
-        release_version = f"{year}.{int(month)}{day}.{int(build)}.{int(revision)}"
+        build = f"{ts.hour}{ts.minute}"
+        revision = ts.second
+        release_version = f"{ts.year}.{int(ts.month)}{ts.day}.{int(build)}.{int(revision)}"
     else:
         # default versioning
-        build = f"{hour}{minute}{second}"
-        release_version = f"{year}.{int(month)}{day}.{int(build)}"
+        build = f"{ts.hour}{ts.minute}{ts.second}"
+        release_version = f"{ts.year}.{int(ts.month)}{ts.day}.{int(build)}"
 
     push_event_details['release_version'] = release_version
     return push_event_details
