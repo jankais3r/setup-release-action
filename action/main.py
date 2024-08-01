@@ -423,7 +423,7 @@ def main() -> dict:
     # generate release notes
     if push_event_details['publish_release']:
         release_body = generate_release_body(
-            tag_name=release_tag,
+            tag_name=f"{os.getenv('INPUT_TAG_PREFIX', 'v')}{release_tag}",
             target_commitish=push_event_details["release_commit"],
         )
     else:

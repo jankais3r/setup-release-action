@@ -147,7 +147,7 @@
 * [@cathyjf](https://github.com/cathyjf) made their first contribution in [#2786](https://github.com/LizardByte/Sunshine/pull/2786)
 * [@cfalas](https://github.com/cfalas) made their first contribution in [#2841](https://github.com/LizardByte/Sunshine/pull/2841)
 
-**Full Changelog**: https://github.com/LizardByte/Sunshine/compare/v0.23.1...2024.713.195308
+**Full Changelog**: https://github.com/LizardByte/Sunshine/compare/v0.23.1...v2024.713.195308
 
 
 ---
