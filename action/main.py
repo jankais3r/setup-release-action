@@ -231,7 +231,7 @@ def get_push_event_details() -> dict:
 
     # this is a push event
     # check if squash and merge is required
-    if not get_repo_squash_and_merge_required():
+    if get_repo_squash_and_merge_required():
         msg = (":exclamation: ERROR: Squash and merge is not enabled for this repository. "
                "Please ensure ONLY squash and merge is enabled. "
                "**DO NOT** re-run this job after changing the repository settings. Wait until a new commit is made.")
